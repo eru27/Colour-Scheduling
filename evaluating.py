@@ -13,7 +13,7 @@ import graph as gp
 #3. Proffesors should have equal number of lectures each day
 #4. Grades should not have lecture by the same proffesor more days in a row
 
-MAX_LECTURES_PER_DAY_FOR_PROF = 5
+MAX_LECTURES_PER_DAY_FOR_PROF = 4
 
 H0_PENALTY = 1
 H1_PENALTY = 1
@@ -25,6 +25,13 @@ S1_PENALTY = 1
 S2_PENALTY = 1
 S3_PENALTY = 1
 S4_PENALTY = 1
+
+def findNode(graph, proff = None, grade = None, colour = None):
+    'Finds node in the graph'
+    for node in list(graph.nodes):
+        if (proff == None or node.proff == proff) and (grade == None or node.grade == grade) and (colour == None or graph.nodes[node]['colour'] == colour):
+            return node
+    return None
 
 def H0(graph):
     'Proffesors and grades cannot have two lectures at the same time'
@@ -43,22 +50,22 @@ def H0(graph):
     penalty = H0_PENALTY * len(naughtyNodes)
     return (penalty, proffesorsLectures, gradesLectures, naughtyNodes)
 
-def H1(gradesLectures, banLecturesForGrades):
-    'Proffesors cannot have lectures explicit times'
-    naughtyNodes = []
-    for lecture in banLecturesForGrades:
-        if gradesLectures[lecture[0][1]][lecture[1]] == 1:
-            naughtyNodes.append(lecture)
-    penalty = H1_PENALTY * len(naughtyNodes)
-    return (penalty, naughtyNodes)
-
-def H2(proffesorsLectures, banLecturesForProffesors):
-    'Grades cannot have lectures at explicit times'
+def H1(graph, proffesorsLectures, banLecturesForProffesors):
+    'Proffesors cannot have lectures at explicit times'
     naughtyNodes = []
     for lecture in banLecturesForProffesors:
-        if proffesorsLectures[lecture[0][1]][lecture[1]] == 1:
-            naughtyNodes.append(lecture)
+        if proffesorsLectures[lecture[0]][lecture[1]] == 1:
+            naughtyNodes.append(findNode(graph, proff = lecture[0], colour = lecture[1]))
     penalty = H2_PENALTY * len(naughtyNodes)
+    return (penalty, naughtyNodes)
+
+def H2(graph, gradesLectures, banLecturesForGrades):
+    'Grades cannot have lectures explicit times'
+    naughtyNodes = []
+    for lecture in banLecturesForGrades:
+        if gradesLectures[lecture[0]][lecture[1]] == 1:
+            naughtyNodes.append(findNode(graph, grade = lecture[0], colour =  lecture[1]))
+    penalty = H1_PENALTY * len(naughtyNodes)
     return (penalty, naughtyNodes)
 
 def H3(gradesLectures):
@@ -83,7 +90,7 @@ def H4(graph):
         if not nodeTuple in lecturesInDay[day]:
             lecturesInDay[day].append(nodeTuple)
         else:
-            naughtyNodes.append(nodeTuple)
+            naughtyNodes.append(node)
     penalty = H4_PENALTY * len(naughtyNodes)
     return (penalty, lecturesInDay, naughtyNodes)
 
@@ -145,7 +152,78 @@ def S4(lecturesInDay):
                 twoDaysLectures[numDay].append(lecture)
         penalty += S4_PENALTY * len(twoDaysLectures[numDay])
     return (penalty, twoDaysLectures)
-                        
+
+def calculateEnergy(graph, banLecturesForProffesors, banLecturesForGrades):
+    energy = 0
+
+    H0Energy = H0(graph)
+    H0Penalty = H0Energy[0]
+    proffesorsLectures = H0Energy[1]
+    gradesLectures = H0Energy[2]
+    #H0NaughtyNodes = H0Energy[3]
+
+    energy += H0Penalty
+    #print(H0Penalty)
+
+    H1Energy = H1(graph, proffesorsLectures, banLecturesForProffesors)
+    H1Penalty = H1Energy[0]
+    #H1NaughtyNodes = H1Energy[1]
+
+    energy += H1Penalty
+    #print(H1Penalty)
+
+    H2Energy = H2(graph, gradesLectures, banLecturesForGrades)
+    H2Penalty = H2Energy[0]
+    #H2NaughtyNodes = H2Energy[1]
+
+    energy += H2Penalty
+    #print(H2Penalty)
+
+    H3Energy = H3(gradesLectures)
+    H3Penalty = H3Energy[0]
+    #gradesEmptyLectures = H3Energy[1]
+
+    energy += H3Penalty
+    #print(H3Penalty)
+
+    H4Energy = H4(graph)
+    H4Penalty = H4Energy[0]
+    gradesLecturesInDay = H4Energy[1]
+    #H4NaughtyNodes = H4Energy[2]
+
+    energy += H4Penalty
+    #print(H4Penalty)
+
+    S1Energy = S1(proffesorsLectures)
+    S1Penalty = S1Energy[0]
+    #proffesorsEmptyLectures = S1Energy[1]
+
+    energy += S1Penalty
+    #print(S1Penalty)
+
+    S2Energy = S2(proffesorsLectures)
+    S2Penalty = S2Energy[0]
+    proffesorsNumberOfLecturesPerDay = S2Energy[1]
+
+    energy += S2Penalty
+    #print(S2Penalty)
+
+    S3Energy = S3(proffesorsNumberOfLecturesPerDay)
+    S3Penalty = S3Energy[0]
+    #S3NaughtyNodes = S3Energy[1]
+
+    energy += S3Penalty
+    #print(S3Penalty)
+
+    S4Energy = S4(gradesLecturesInDay)
+    S4Penalty = S4Energy[0]
+    #gradesTwoDaysLectures = S4Energy[1]
+
+    energy += S4Penalty
+    #print(S4Penalty)
+
+    return (energy, (H0Energy, H1Energy, H2Energy, H3Energy, H4Energy), (S1Energy, S2Energy, S3Energy, S4Energy))
+
 '''
 MAIN
 
@@ -154,13 +232,13 @@ g = gp.getGraph()
 t = H0(g)
 print(t[0])
 
-banLecturesForGrades = [((0,0),0)]
-banLecturesForProffesors = [((0,0),0)]
+banLecturesForGrades = [((0, 0)]
+banLecturesForProffesors = [(0, 0)]
 
-t1 = H1(t[2], banLecturesForGrades)
+t1 = H1(g, t[1], banLecturesForProffesors)
 print(t1[0])
 
-t2 = H2(t[1], banLecturesForProffesors)
+t2 = H2(g, t[2], banLecturesForGrades)
 print(t2[0])
 
 t3 = H3(t[2])
