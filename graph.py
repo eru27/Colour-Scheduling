@@ -122,7 +122,9 @@ def getGraph():
 
     return graph
 
+'''
 getGraph()
+'''
 
 '''
 MAIN
