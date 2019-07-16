@@ -5,7 +5,7 @@ import random
 import copy
 import math
 
-#H0 = (penalty, naughtyNodes, proffesorsLectures, gradesLectures)
+#H0 = (penalty, naughtyNodes, professorsLectures, gradesLectures)
 
 #S1 = (penalty, naughtyNodes)
 #S2 = (penalty, naughtyNodes)
@@ -13,7 +13,7 @@ import math
 #S4 = (penalty, naughtyNodes, lecturesInDay)
 #S5 = (penalty, emptyLectures)
 #S6 = (penalty, numberOfLecturesPerDay)
-#S7 = (penalty, naughtyProffesorsDays)
+#S7 = (penalty, naughtyProfessorsDays)
 #S8 = (penalty, twoDaysLectures)
 
 #---constants---
@@ -21,7 +21,7 @@ import math
 TEMPERATURE = 10000
 STEP = 0.98
 
-banLecturesForProffesors = [(0, 0)] #citanje iz fajla
+banLecturesForProfessors = [(0, 0)] #citanje iz fajla
 banLecturesForGrades = [(0, 0)]
 
 #---------------
@@ -60,21 +60,13 @@ def fixRandomLegal(graph, naughtyNodes, H0):
 
     return graph
 
-def getLegalMoves(node, proffesorsLectures, gradesLectures):
+def getLegalMoves(node, professorsLectures, gradesLectures):
     legalMoves = []
     for colour in range(gp.NUMBER_OF_COLOURS):
-        if proffesorsLectures[node.proff][colour] == 0 and gradesLectures[node.grade][colour] == 0:
+        if professorsLectures[node.proff][colour] == 0 and gradesLectures[node.grade][colour] == 0:
             legalMoves.append(colour)
         
     return legalMoves
-
-def isThisMoveLegal(graph, node1, node2, proffesorsLectures, gradesLectures):
-    if node1.proff == node2.proff and gradesLectures[node1.grade][graph.nodes[node2]['colour']] == 0 and gradesLectures[node2.grade][graph.nodes[node1]['colour']]:
-        return True
-    if node1.grade == node2.grade and proffesorsLectures[node1.proff][graph.nodes[node2]['colour']] == 0 and proffesorsLectures[node2.proff][graph.nodes[node1]['colour']]:
-        return True
-    print(node2.proff, node2.grade)
-    return False
 
 def fixH0(graph, H0):
     naughtyNodes = H0[1]
@@ -83,35 +75,43 @@ def fixH0(graph, H0):
 
     random.seed()
     node = random.choice(naughtyNodes)
-    
+    bannedColours = []
+    for badNode in naughtyNodes:
+        if badNode.proff == node.proff and badNode.grade == node.grade:
+            bannedColours.append(graph.nodes[badNode]['colour'])
+
     colours = getLegalMoves(node, proffesorsLectures, gradesLectures)
 
     if colours:
         graph.nodes[node]['colour'] = random.choice(colours)
     else:
-        isFixed = False
-        while not isFixed:
-            swapNode = random.choice(list(graph.nodes))
-            if isThisMoveLegal(graph, node, swapNode, proffesorsLectures, gradesLectures):
-                tempColour = graph.nodes[node]['colour']
-                graph.nodes[node]['colour'] = graph.nodes[swapNode]['colour']
-                graph.nodes[swapNode]['colour'] = tempColour
-                isFixed = True
+        swapList = []
+        for swapNode in graph.nodes:
+            if ((node.proff == swapNode.proff and not node.grade == swapNode.grade) or (node.grade == swapNode.grade and not node.proff == swapNode.proff)) and graph.nodes[swapNode]['colour'] not in bannedColours:
+                swapList.append(swapNode)
+        if swapList:
+            swapNode = random.choice(swapList)
+            tempColour = graph.nodes[node]['colour']
+            graph.nodes[node]['colour'] = graph.nodes[swapNode]['colour']
+            graph.nodes[swapNode]['colour'] = tempColour
+        else:
+            print('jebi se0')
 
     return graph
 
+
 def fixS1(graph, H0, S1):
     naughtyNodes = S1[1]
-    proffesorsLectures = H0[2]
+    professorsLectures = H0[2]
     gradesLectures = H0[3]
 
     random.seed()
     node = random.choice(naughtyNodes)
-
-    colours = getLegalMoves(node, proffesorsLectures, gradesLectures)
-
-    for lecture in banLecturesForProffesors:
+    bannedColours = []
+    colours = getLegalMoves(node, professorsLectures, gradesLectures)
+    for lecture in banLecturesForProfessors:
         if lecture[0] == node.proff:
+            bannedColours.append(lecture[1])
             if lecture[1] in colours:
                 colours.remove(lecture[1])
 
@@ -120,36 +120,20 @@ def fixS1(graph, H0, S1):
     else:
         swapList = []
         for swapNode in graph.nodes:
-            if isThisMoveLegal(graph, node, swapNode, proffesorsLectures, gradesLectures):
+            if node.grade == swapNode.grade and not node.proff == swapNode.proff and not graph.nodes[swapNode]['colour'] in bannedColours: #Assuming this schedule is already legal. Keep the grade and make proff free
                 swapList.append(swapNode)
         if swapList:
             swapNode = random.choice(swapList)
-            swapNode.printNode()
-            node.printNode()
             tempColour = graph.nodes[node]['colour']
             graph.nodes[node]['colour'] = graph.nodes[swapNode]['colour']
             graph.nodes[swapNode]['colour'] = tempColour
         else:
-            print('jebi se')
+            print('jebi se1')
 
     return graph
 
 def fixS2(graph, S2):
-    naughtyNodes = S2[1]
-
-    random.seed()
-    node = random.choice(naughtyNodes)
-
-    isFixed = False
-
-    while not isFixed: ######### log inf loop
-        nodeToSwap = random.choice(list(graph.nodes))
-        if not((nodeToSwap in naughtyNodes) and (nodeToSwap.grade is not node.grade)):
-            tempColour = graph.nodes[node]['colour']
-            graph.nodes[node]['colour'] = graph.nodes[nodeToSwap]['colour']
-            graph.nodes[nodeToSwap]['colour'] = tempColour
-            isFixed = True
-
+    
     return graph
 
 def fixS3(graph, S3): #for now we pray
@@ -195,10 +179,10 @@ def fix(graph, HardConstraint, SVector): #izbaci sve osim nn
 def annealing(orgGraph, orgEnergy):
     newGraph = copy.deepcopy(graph)
 
-    energy = el.calculateEnergy(newGraph, banLecturesForProffesors, banLecturesForGrades)
+    energy = el.calculateEnergy(newGraph, banLecturesForProfessors, banLecturesForGrades)
     fix(newGraph, energy[1], energy[2])
 
-    newEnergy = el.calculateEnergy(newGraph, banLecturesForProffesors, banLecturesForGrades)
+    newEnergy = el.calculateEnergy(newGraph, banLecturesForProfessors, banLecturesForGrades)
 
     deltaEnergy = Energy[0] - newEnergy[0]
 
@@ -216,15 +200,15 @@ def annealing(orgGraph, orgEnergy):
 
 graph = gp.getGraph()
 
-gp.writeGraph(graph, 'orgsukurac')
+#gp.writeGraph(graph, 'orgsukurac')
 
-Energy = el.calculateEnergy(graph, banLecturesForProffesors, banLecturesForGrades)
+Energy = el.calculateEnergy(graph, banLecturesForProfessors, banLecturesForGrades)
 
 print(Energy[0])
 
 fixS1(graph, Energy[1], Energy[2][0])
 
-Energy = el.calculateEnergy(graph, banLecturesForProffesors, banLecturesForGrades)
+Energy = el.calculateEnergy(graph, banLecturesForProfessors, banLecturesForGrades)
 
 print(Energy[0])
 
@@ -268,7 +252,7 @@ for i in range(20):
         print()
         graph = gp.getGraph()
 
-        Energy = el.calculateEnergy(graph, banLecturesForProffesors, banLecturesForGrades)
+        Energy = el.calculateEnergy(graph, banLecturesForProfessors, banLecturesForGrades)
 
         generation = 0
 

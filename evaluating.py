@@ -1,17 +1,17 @@
 import graph as gp
 
 #Hard constraints:
-#0. Proffesors and grades cannot have two lectures at the same time
+#0. Professors and grades cannot have two lectures at the same time
 
 #Soft constraints:
-#1. Proffesors cannot have lectures explicit times
+#1. Professors cannot have lectures explicit times
 #2. Grades cannot have lectures at explicit times
 #3. Grades cannot have empty lectures except first and last ones in a day
-#4. Grades cannot be thought by the same proffesor more than once a day
-#5. Proffesors should not have empty lectures
-#6. Proffesors should not have more than MAX_LECTURES_PER_DAY_FOR_PROF lectures per day
-#7. Proffesors should have equal number of lectures each day
-#8. Grades should not have lecture by the same proffesor more days in a row
+#4. Grades cannot be thought by the same professor more than once a day
+#5. Professors should not have empty lectures
+#6. Professors should not have more than MAX_LECTURES_PER_DAY_FOR_PROF lectures per day
+#7. Professors should have equal number of lectures each day
+#8. Grades should not have lecture by the same professor more days in a row
 
 #---constants---
 
@@ -38,27 +38,27 @@ def findNode(graph, proff = None, grade = None, colour = None):
     return None
 
 def H0(graph):
-    'Proffesors and grades cannot have two lectures at the same time'
+    'Professors and grades cannot have two lectures at the same time'
     naughtyNodes = []
-    proffesorsLectures = [[0 for i in range(gp.NUMBER_OF_COLOURS)] for j in range(gp.NUMBER_OF_PROFF)]
+    professorsLectures = [[0 for i in range(gp.NUMBER_OF_COLOURS)] for j in range(gp.NUMBER_OF_PROFF)]
     gradesLectures = [[0 for i in range(gp.NUMBER_OF_COLOURS)] for j in range(gp.NUMBER_OF_GRADES)]
     for node in list(graph.nodes):
         try:
-            if proffesorsLectures[node.proff][graph.nodes[node]['colour']] == 0 and gradesLectures[node.grade][graph.nodes[node]['colour']] == 0:
-                proffesorsLectures[node.proff][graph.nodes[node]['colour']] = 1
+            if professorsLectures[node.proff][graph.nodes[node]['colour']] == 0 and gradesLectures[node.grade][graph.nodes[node]['colour']] == 0:
+                professorsLectures[node.proff][graph.nodes[node]['colour']] = 1
                 gradesLectures[node.grade][graph.nodes[node]['colour']] = 1
             else:
                 naughtyNodes.append(node)
         except:
             naughtyNodes.append(node)
     penalty = H0_PENALTY * len(naughtyNodes)
-    return (penalty, naughtyNodes, proffesorsLectures, gradesLectures)
+    return (penalty, naughtyNodes, professorsLectures, gradesLectures)
 
-def S1(graph, proffesorsLectures, banLecturesForProffesors):
-    'Proffesors cannot have lectures at explicit times'
+def S1(graph, professorsLectures, banLecturesForProfessors):
+    'Professors cannot have lectures at explicit times'
     naughtyNodes = []
-    for lecture in banLecturesForProffesors:
-        if proffesorsLectures[lecture[0]][lecture[1]] == 1:
+    for lecture in banLecturesForProfessors:
+        if professorsLectures[lecture[0]][lecture[1]] == 1:
             naughtyNodes.append(findNode(graph, proff = lecture[0], colour = lecture[1]))
     penalty = S2_PENALTY * len(naughtyNodes)
     return (penalty, naughtyNodes)
@@ -85,7 +85,7 @@ def S3(gradesLectures):
     return (penalty, emptyLectures)
 
 def S4(graph):
-    'Grades cannot be thought by the same proffesor more than once a day'
+    'Grades cannot be thought by the same professor more than once a day'
     naughtyNodes = []
     lecturesInDay = [[] for i in range(gp.WORKING_DAYS)]
     for node in list(graph.nodes):
@@ -98,8 +98,8 @@ def S4(graph):
     penalty = S4_PENALTY * len(naughtyNodes)
     return (penalty, naughtyNodes, lecturesInDay)
 
-def S5(proffesorsLectures):
-    'Proffesors should not have empty lectures'
+def S5(professorsLectures):
+    'Professors should not have empty lectures'
     emptyLectures = [[0 for i in range(gp.NUMBER_OF_COLOURS)] for j in range(gp.NUMBER_OF_PROFF)]
     penalty = 0
     for proff in range(gp.NUMBER_OF_PROFF):
@@ -107,24 +107,24 @@ def S5(proffesorsLectures):
             firstLecture = 0
             lastLecture = 0
             for lectures in range(gp.LECTURES_PER_DAY):
-                if proffesorsLectures[proff][gp.LECTURES_PER_DAY * day + lectures] == 1:
+                if professorsLectures[proff][gp.LECTURES_PER_DAY * day + lectures] == 1:
                     firstLecture = 1
                     lastLecture = lectures
-                if firstLecture == 1 and proffesorsLectures[proff][gp.LECTURES_PER_DAY * day + lectures] == 0:
+                if firstLecture == 1 and professorsLectures[proff][gp.LECTURES_PER_DAY * day + lectures] == 0:
                     emptyLectures[proff][gp.LECTURES_PER_DAY * day + lectures] = 1
             for lastEmptyLectures in range(lastLecture, gp.LECTURES_PER_DAY):
                 emptyLectures[proff][gp.LECTURES_PER_DAY * day + lastEmptyLectures] = 0
         penalty += S5_PENALTY * emptyLectures[proff].count(1)
     return (penalty, emptyLectures)
 
-def S6(proffesorsLectures):
-    'Proffesors should not have more than MAX_LECTURES_PER_DAY_FOR_PROF lectures per day'
+def S6(professorsLectures):
+    'Professors should not have more than MAX_LECTURES_PER_DAY_FOR_PROF lectures per day'
     numberOfLecturesPerDay = [[0 for i in range(gp.WORKING_DAYS)] for j in range(gp.NUMBER_OF_PROFF)]
     penalty = 0
     for proff in range(gp.NUMBER_OF_PROFF):
         for day in range(gp.WORKING_DAYS):
             for lecture in range(gp.LECTURES_PER_DAY):
-                if proffesorsLectures[proff][gp.LECTURES_PER_DAY * day + lecture] == 1:
+                if professorsLectures[proff][gp.LECTURES_PER_DAY * day + lecture] == 1:
                     numberOfLecturesPerDay[proff][day] += 1
             if numberOfLecturesPerDay[proff][day] > MAX_LECTURES_PER_DAY_FOR_PROF:
                 penalty += S6_PENALTY * (numberOfLecturesPerDay[proff][day] - MAX_LECTURES_PER_DAY_FOR_PROF)
@@ -132,20 +132,20 @@ def S6(proffesorsLectures):
     return (penalty, numberOfLecturesPerDay)
 
 def S7(numberOfLecturesPerDay):
-    'Proffesors should have equal number of lectures each day'
-    naughtyProffesorsDays = [[0 for i in range(gp.WORKING_DAYS)] for j in range(gp.NUMBER_OF_PROFF)]
+    'Professors should have equal number of lectures each day'
+    naughtyProfessorsDays = [[0 for i in range(gp.WORKING_DAYS)] for j in range(gp.NUMBER_OF_PROFF)]
     penalty = 0
     for proff in range(gp.NUMBER_OF_PROFF):
         averageNumOfLectures = (sum(numberOfLecturesPerDay[proff]) + gp.WORKING_DAYS - 1) // gp.WORKING_DAYS
         for day in range(gp.WORKING_DAYS):
             if numberOfLecturesPerDay[proff][day] > averageNumOfLectures + 1 or numberOfLecturesPerDay[proff][day] < averageNumOfLectures - 1:
-                naughtyProffesorsDays[proff][day] = numberOfLecturesPerDay[proff][day] - averageNumOfLectures
-                penalty += S7_PENALTY * abs(naughtyProffesorsDays[proff][day])
-    return (penalty, naughtyProffesorsDays)
+                naughtyProfessorsDays[proff][day] = numberOfLecturesPerDay[proff][day] - averageNumOfLectures
+                penalty += S7_PENALTY * abs(naughtyProfessorsDays[proff][day])
+    return (penalty, naughtyProfessorsDays)
 
 
 def S8(lecturesInDay):
-    'Grades should not have lecture by the same proffesor more days in a row'
+    'Grades should not have lecture by the same professor more days in a row'
     twoDaysLectures = [[] for i in range(gp.WORKING_DAYS)]
     penalty = 0
     for numDay, day in enumerate(lecturesInDay):
@@ -157,19 +157,19 @@ def S8(lecturesInDay):
         penalty += S8_PENALTY * len(twoDaysLectures[numDay])
     return (penalty, twoDaysLectures)
 
-def calculateEnergy(graph, banLecturesForProffesors, banLecturesForGrades):
+def calculateEnergy(graph, banLecturesForProfessors, banLecturesForGrades):
     energy = 0
 
     H0Energy = H0(graph)
     H0Penalty = H0Energy[0]
     #H0NaughtyNodes = H0Energy[1]
-    proffesorsLectures = H0Energy[2]
+    professorsLectures = H0Energy[2]
     gradesLectures = H0Energy[3]
 
     energy += H0Penalty
     #print(H0Penalty)
 
-    S1Energy = S1(graph, proffesorsLectures, banLecturesForProffesors)
+    S1Energy = S1(graph, professorsLectures, banLecturesForProfessors)
     S1Penalty = S1Energy[0]
     #S1NaughtyNodes = S1Energy[1]
 
@@ -198,23 +198,23 @@ def calculateEnergy(graph, banLecturesForProffesors, banLecturesForGrades):
     energy += S4Penalty
     #print(S4Penalty)
 
-    S5Energy = S5(proffesorsLectures)
+    S5Energy = S5(professorsLectures)
     S5Penalty = S5Energy[0]
-    #proffesorsEmptyLectures = S5Energy[1]
+    #professorsEmptyLectures = S5Energy[1]
 
     energy += S5Penalty
     #print(S5Penalty)
 
-    S6Energy = S6(proffesorsLectures)
+    S6Energy = S6(professorsLectures)
     S6Penalty = S6Energy[0]
-    proffesorsNumberOfLecturesPerDay = S6Energy[1]
+    professorsNumberOfLecturesPerDay = S6Energy[1]
 
     energy += S6Penalty
     #print(S6Penalty)
 
-    S7Energy = S7(proffesorsNumberOfLecturesPerDay)
+    S7Energy = S7(professorsNumberOfLecturesPerDay)
     S7Penalty = S7Energy[0]
-    #S7naughtyProffesorsDays = S7Energy[1]
+    #S7naughtyProfessorsDays = S7Energy[1]
 
     energy += S7Penalty
     #print(S7Penalty)
@@ -237,9 +237,9 @@ t = H0(g)
 print(t[0])
 
 banLecturesForGrades = [((0, 0)]
-banLecturesForProffesors = [(0, 0)]
+banLecturesForProfessors = [(0, 0)]
 
-t1 = S1(g, t[1], banLecturesForProffesors)
+t1 = S1(g, t[1], banLecturesForProfessors)
 print(t1[0])
 
 t2 = S2(g, t[2], banLecturesForGrades)

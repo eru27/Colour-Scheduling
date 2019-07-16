@@ -71,7 +71,7 @@ def colourGraph(graph):
     return graph
 
 def loadNodes(fileName):
-    'Loads nodes form csv file with rows being proffesors and values being grades'
+    'Loads nodes form csv file with rows being professors and values being grades'
     f = open(fileName, 'r')
     nodes = []
     maxGrade = -1
