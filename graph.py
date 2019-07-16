@@ -2,6 +2,8 @@ import networkx as nx
 
 IDFK_counter = 0
 
+#---constants---
+
 NUMBER_OF_PROFF = 0
 NUMBER_OF_GRADES = 0
 
@@ -11,8 +13,10 @@ NUMBER_OF_COLOURS = WORKING_DAYS * LECTURES_PER_DAY #Number of lectures slots
 
 NUMBER_OF_COLOURS_USED = 0
 
-SOURCE = 'sources/set0.csv'
+SOURCE = 'sources/set01.csv'
 OUT = 'f.csv'
+
+#---------------
 
 class Node:
     def __init__(self, proff = -1, grade = -1):
