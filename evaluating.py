@@ -138,7 +138,7 @@ def S7(numberOfLecturesPerDay):
     for proff in range(gp.NUMBER_OF_PROFF):
         averageNumOfLectures = (sum(numberOfLecturesPerDay[proff]) + gp.WORKING_DAYS - 1) // gp.WORKING_DAYS
         for day in range(gp.WORKING_DAYS):
-            if numberOfLecturesPerDay[proff][day] > averageNumOfLectures + 1 or numberOfLecturesPerDay[proff][day] < averageNumOfLectures - 1:
+            if numberOfLecturesPerDay[proff][day] > averageNumOfLectures or numberOfLecturesPerDay[proff][day] < averageNumOfLectures:
                 naughtyProfessorsDays[proff][day] = numberOfLecturesPerDay[proff][day] - averageNumOfLectures
                 penalty += S7_PENALTY * abs(naughtyProfessorsDays[proff][day])
     return (penalty, naughtyProfessorsDays)
@@ -150,9 +150,7 @@ def S8(lecturesInDay):
     penalty = 0
     for numDay, day in enumerate(lecturesInDay):
         for lecture in day:
-            if numDay > 0 and lecture in lecturesInDay[numDay - 1]:
-                if numDay > 1 and not lecture in lecturesInDay[numDay - 2]:
-                    twoDaysLectures[numDay].append(lecture)
+            if numDay > 0 and lecture in lecturesInDay[numDay - 1] and lecture not in twoDaysLectures[numDay - 1]:
                 twoDaysLectures[numDay].append(lecture)
         penalty += S8_PENALTY * len(twoDaysLectures[numDay])
     return (penalty, twoDaysLectures)
