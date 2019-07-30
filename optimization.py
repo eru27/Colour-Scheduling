@@ -12,21 +12,25 @@ import math
 #S3 = (penalty, emptyLectures)
 #S4 = (penalty, naughtyNodes, lecturesInDay)
 #S5 = (penalty, emptyLectures)
-#S6 = (penalty, numberOfLecturesPerDay)
-#S7 = (penalty, naughtyProfessorsDays)
-#S8 = (penalty, twoDaysLectures)
+#S6 = (penalty, naughtyNodes, numberOfLecturesPerDay)
+#S7 = (penalty, naughtyNodes, naughtyProfessorsDays)
+#S8 = (penalty, naughtyNodes, twoDaysLectures) ##fix this shit
 
 #---constants---
 
-TEMPERATURE = 10000
-STEP = 0.98
+MAX_TEMPERATURE = 5000
+TEMPERATURE = MAX_TEMPERATURE
+STEP = 0.9
 
-banLecturesForProfessors = [(0, 0)] #citanje iz fajla
-banLecturesForGrades = [(0, 0)]
+banLecturesForProfessors = [] #citanje iz fajla
+banLecturesForGrades = []
 
 #---------------
 
 changesCounter = 0
+
+def getNodeColour(graph, node):
+    return graph.nodes[node]['colour']
 
 def fixRandom(graph, naughtyNodes):
     random.seed()
@@ -39,24 +43,19 @@ def fixRandom(graph, naughtyNodes):
 
     return graph
 
-def fixRandomLegal(graph, naughtyNodes, H0):
-    random.seed()
+def fixRandomLegal(graph, naughtyNodes, professorsLectures, gradesLectures):
+    index = 0
 
     isFixed = False
     while not isFixed:
-        node = random.choice(naughtyNodes)
+        node = naughtyNodes[index]
         
-        legalColours = []
-        for colour in range(gp.NUMBER_OF_COLOURS):
-            if H0[2][node.proff][colour] == 0 and H0[3][node.grade][colour] == 0:
-                legalColours.append(colour)
+        legalColours = getLegalMoves(node, professorsLectures, gradesLectures)
 
-        if node in graph.nodes:
-            if legalColours:
-                graph.nodes[node]['colour'] = random.choice(legalColours)
-                isFixed = True
-        else:
-            print('.')
+        if legalColours:
+            graph.nodes[node]['colour'] = random.choice(legalColours)
+            isFixed = True
+        index += 1
 
     return graph
 
@@ -76,15 +75,23 @@ def getBannedColoursH0(graph, node, naughtyNodes):
 
     return bannedColours
 
-def getBannedColoursS12(nodeAtribute, bannedLectures):
+def getBannedColoursS1(node, bannedLectures):
     bannedColours = []
     for lecture in bannedLectures:
-        if lecture[0] == nodeAtribute:
+        if lecture[0] == node.proff:
             bannedColours.append(lecture[1])
 
     return bannedColours
 
-def getBannedColoursS4(graph, node, lecturesInDay):
+def getBannedColoursS2(node, bannedLectures):
+    bannedColours = []
+    for lecture in bannedLectures:
+        if lecture[0] == node.grade:
+            bannedColours.append(lecture[1])
+
+    return bannedColours
+
+def getBannedColoursS4(node, lecturesInDay):
     bannedColours = []
     for day in range(gp.WORKING_DAYS):
         if (node.proff, node.grade) in lecturesInDay[day]:
@@ -92,147 +99,63 @@ def getBannedColoursS4(graph, node, lecturesInDay):
 
     return bannedColours
 
-def getBannedColoursS6(graph, node, numberOfLecturesPerDay):
+def getBannedColoursS6(node, numberOfLecturesPerDay):
     bannedColours = []
     for day in range(gp.WORKING_DAYS):
         if numberOfLecturesPerDay[node.proff][day] >= el.MAX_LECTURES_PER_DAY_FOR_PROF:
-                bannedColours += list(range(gp.LECTURES_PER_DAY * day, gp.LECTURES_PER_DAY * day + gp.LECTURES_PER_DAY - 1))
+                bannedColours += list(range(gp.LECTURES_PER_DAY * day, gp.LECTURES_PER_DAY * day + gp.LECTURES_PER_DAY))
     
     return bannedColours
 
 def getBannedColoursS7(node, naughtyProfessorsDays):
     bannedColours = []
     for day in range(gp.WORKING_DAYS):
-        if naughtyProfessorsDays[node.proff][day] > 0:
-            bannedColours += list(range(gp.LECTURES_PER_DAY * day, gp.LECTURES_PER_DAY * day + gp.LECTURES_PER_DAY - 1))
+        if naughtyProfessorsDays[node.proff][day] >= 0:
+            bannedColours += list(range(gp.LECTURES_PER_DAY * day, gp.LECTURES_PER_DAY * day + gp.LECTURES_PER_DAY))
     
     return bannedColours
 
-def getBannedColoursS8(node, twoDaysLectures):
+def getBannedColoursS8(node, twoDaysLectures): #moze da gura ista predavanja u jedan dan
     bannedColours = []
     for day in range(gp.WORKING_DAYS):
         if (node.proff, node.grade) in twoDaysLectures[day]:
-            bannedColours += list(range(gp.LECTURES_PER_DAY * day, gp.LECTURES_PER_DAY * day + gp.LECTURES_PER_DAY - 1))
+            bannedColours += list(range(gp.LECTURES_PER_DAY * day, gp.LECTURES_PER_DAY * day + gp.LECTURES_PER_DAY))
     
     return bannedColours
 
-def fixH0(graph, H0):
-    naughtyNodes = H0[1]
-    professorsLectures = H0[2]
-    gradesLectures = H0[3]
+def swappingNodesCondition(graph, node1, node2, professorsLectures, gradesLectures, swappingNodesConditionArguments, bannedColours):
+    if ((swappingNodesConditionArguments[0] and accordingToProfessor(graph, node1, node2, professorsLectures)) or (swappingNodesConditionArguments[1] and accordingToGrade(graph, node1, node2, gradesLectures))) and not getNodeColour(graph, node2) in bannedColours:
+        return True
+    return False
 
+def accordingToProfessor(graph, node1, node2, professorsLectures):
+    if node1.grade == node2.grade and not node1.proff == node2.proff:
+        if not professorsLectures[node1.proff][getNodeColour(graph, node2)]:
+            if not professorsLectures[node2.proff][getNodeColour(graph, node1)]:
+                return True
+    return False
+
+def accordingToGrade(graph, node1, node2, gradesLectures):
+    if node1.proff == node2.proff and not node1.grade == node2.grade:
+        if not gradesLectures[node1.grade][getNodeColour(graph, node2)]:
+            if not gradesLectures[node2.grade][getNodeColour(graph, node1)]:
+                return True
+    return False
+
+def fix00(graph, naughtyNodes, professorsLectures, gradesLectures, getBannedColours, getBannedColoursArgumet, swappingNodesConditionArguments):
+    if not naughtyNodes:
+        return graph
     random.seed()
     node = random.choice(naughtyNodes)
-    bannedColours = []
-    for badNode in naughtyNodes:
-        if badNode.proff == node.proff and badNode.grade == node.grade:
-            bannedColours.append(graph.nodes[badNode]['colour'])
-
-    colours = getLegalMoves(node, professorsLectures, gradesLectures)
-
-    if colours:
-        graph.nodes[node]['colour'] = random.choice(colours)
-    else:
-        swapList = []
-        for swapNode in graph.nodes:
-            if ((node.proff == swapNode.proff and not node.grade == swapNode.grade) or (node.grade == swapNode.grade and not node.proff == swapNode.proff)) and graph.nodes[swapNode]['colour'] not in bannedColours:
-                swapList.append(swapNode)
-        if swapList:
-            swapNode = random.choice(swapList)
-            tempColour = graph.nodes[node]['colour']
-            graph.nodes[node]['colour'] = graph.nodes[swapNode]['colour']
-            graph.nodes[swapNode]['colour'] = tempColour
-        else:
-            print('jebi se0')
-
-    return graph
-
-def fixS1(graph, H0, S1):
-    naughtyNodes = S1[1]
-    professorsLectures = H0[2]
-    gradesLectures = H0[3]
-
-    random.seed()
-    node = random.choice(naughtyNodes)
-    bannedColours = []
-    colours = getLegalMoves(node, professorsLectures, gradesLectures)
-    for lecture in banLecturesForProfessors:
-        if lecture[0] == node.proff:
-            bannedColours.append(lecture[1])
-            if lecture[1] in colours:
-                colours.remove(lecture[1])
-
-    if colours:
-        graph.nodes[node]['colour'] = random.choice(colours)
-    else:
-        swapList = []
-        for swapNode in graph.nodes:
-            if node.grade == swapNode.grade and not node.proff == swapNode.proff and not graph.nodes[swapNode]['colour'] in bannedColours: #Assuming this schedule is already legal. Keep the grade and make proff free
-                swapList.append(swapNode)
-        if swapList:
-            swapNode = random.choice(swapList)
-            tempColour = graph.nodes[node]['colour']
-            graph.nodes[node]['colour'] = graph.nodes[swapNode]['colour']
-            graph.nodes[swapNode]['colour'] = tempColour
-        else:
-            print('jebi se1')
-
-    return graph
-
-def fixS2(graph, S2):
-    
-    return graph
-
-def fixS3(graph, S3): #for now we pray
-    return graph
-
-def fixS4(graph, S4):
-    naughtyNodes = S4[2]
-
-    random.seed()
-    node = random.choice(naughtyNodes)
-
-    isFixed = False
-
-    while not isFixed: ######### log inf loop
-        nodeToSwap = random.choice(list(graph.nodes))
-        if (graph.nodes[nodeToSwap]['colour'] // gp.LECTURES_PER_DAY) is not (graph.nodes[node]['colour'] // gp.LECTURES_PER_DAY):
-            tempColour = graph.nodes[node]['colour']
-            graph.nodes[node]['colour'] = graph.nodes[nodeToSwap]['colour']
-            graph.nodes[nodeToSwap]['colour'] = tempColour
-            isFixed = True
-
-    return graph
-
-def fixS5(graph, S5):
-    return graph
-
-def fixS6(graph, S6):
-    return graph
-
-def fixS7(graph, S7):
-    return graph
-
-def fixS8(graph, S8):
-    return graph
-
-def swappingNodeCondition():
-    return True
-
-def fix00(graph, naughtyNodes, professorsLectures, gradesLectures, getBannedColours):
-    random.seed()
-    node = random.choice(naughtyNodes)
-
     legalColours = getLegalMoves(node, professorsLectures, gradesLectures)
-    bannedColours = getBannedColours(graph, node, naughtyNodes)
+    bannedColours = getBannedColours(node, getBannedColoursArgumet)
     colours = [colour for colour in legalColours if colour not in bannedColours]
-
     if colours:
         graph.nodes[node]['colour'] = random.choice(colours)
     else:
         swapList = []
         for swapNode in graph.nodes:
-            if swappingNodeCondition():
+            if swappingNodesCondition(graph, node, swapNode, professorsLectures, gradesLectures, swappingNodesConditionArguments, bannedColours):
                 swapList.append(swapNode)
         if swapList:
             swapNode = random.choice(swapList)
@@ -240,59 +163,128 @@ def fix00(graph, naughtyNodes, professorsLectures, gradesLectures, getBannedColo
             graph.nodes[node]['colour'] = graph.nodes[swapNode]['colour']
             graph.nodes[swapNode]['colour'] = tempColour
         else:
-            print('jebi se')
+            fixRandomLegal(graph, naughtyNodes, professorsLectures, gradesLectures)
 
     return graph
 
+'''
 def fix(graph, HardConstraint, SVector): #izbaci sve osim nn
     naughtyNodes = HardConstraint[1] + SVector[0][1] + SVector[1][1] + SVector[3][1]
     
     #fixRandom(graph, naughtyNodes)
     fixRandomLegal(graph, naughtyNodes, HardConstraint)
     return graph
-    
-def annealing(orgGraph, orgEnergy):
-    newGraph = copy.deepcopy(graph)
+'''
 
-    energy = el.calculateEnergy(newGraph, banLecturesForProfessors, banLecturesForGrades)
-    fix(newGraph, energy[1], energy[2])
+def getArguments(constraint, energy):
+    getBannedColours = None
+    getBannedColoursArgumet = None
+    swappingNodesConditionArguments = None
+    if constraint == 1:
+        getBannedColours = getBannedColoursS1
+        getBannedColoursArgumet = banLecturesForProfessors
+        swappingNodesConditionArguments = (1, 0)
+    elif constraint == 2:
+        getBannedColours = getBannedColoursS2
+        getBannedColoursArgumet = banLecturesForGrades
+        swappingNodesConditionArguments = (0, 1)
+    elif constraint == 4:
+        getBannedColours = getBannedColoursS4
+        getBannedColoursArgumet = energy[2][3][2]
+        swappingNodesConditionArguments = (1, 1)
+    elif constraint == 6:
+        getBannedColours = getBannedColoursS6
+        getBannedColoursArgumet = energy[2][5][2]
+        swappingNodesConditionArguments = (1, 0)
+    elif constraint == 7:
+        getBannedColours = getBannedColoursS7
+        getBannedColoursArgumet = energy[2][6][2]
+        swappingNodesConditionArguments = (1, 0)
+    elif constraint == 8:
+        getBannedColours = getBannedColoursS8
+        getBannedColoursArgumet = energy[2][7][2]
+        swappingNodesConditionArguments = (1, 1)
+
+    arguments = {}
+    arguments['getBannedColours'] = getBannedColours
+    arguments['getBannedColoursArgumet'] = getBannedColoursArgumet
+    arguments['swappingNodesConditionArguments'] = swappingNodesConditionArguments
+
+    return arguments
+
+def annealing(orgGraph, orgEnergy):
+    newGraph = copy.deepcopy(orgGraph)
+
+    newEnergy = el.calculateEnergy(newGraph, banLecturesForProfessors, banLecturesForGrades) #zbog adresa node-ova ne budi debil ponovo
+
+    random.seed()
+    constraint = 0
+
+    while constraint == 0 or constraint == 3 or constraint == 5:
+        constraint = random.randint(1, el.NUMBER_OF_SOFT_CONSTRAINTS)
+
+    moreArguments = getArguments(constraint, newEnergy)
+
+    fix00(graph = newGraph, naughtyNodes = newEnergy[2][constraint - 1][1], professorsLectures = newEnergy[1][2], gradesLectures = newEnergy[1][3], **moreArguments)
 
     newEnergy = el.calculateEnergy(newGraph, banLecturesForProfessors, banLecturesForGrades)
 
-    deltaEnergy = Energy[0] - newEnergy[0]
+    deltaEnergy = orgEnergy[0] - newEnergy[0]
 
-    random.seed()
+    
     global changesCounter
+
     if deltaEnergy > 0:
-        
         changesCounter += 1
         return (newGraph, newEnergy)
+
     elif math.exp(deltaEnergy / TEMPERATURE) >= random.uniform(0, 1):
         changesCounter += 1
         return (newGraph, newEnergy)
     else:
-        return (graph, newEnergy)
+        return (orgGraph, orgEnergy)
 
 graph = gp.getGraph()
 
-nodes = list(graph.nodes)
+print(len(graph.nodes))
 
-graph.nodes[nodes[0]]['colour'] = 6
+Energy = el.calculateEnergy(graph, banLecturesForProfessors, banLecturesForGrades)
 
-gp.writeGraph(graph, 'testorgsukurac')
+generation = 0
+
+while MAX_TEMPERATURE > 1:
+    graph, Energy = annealing(graph, Energy)
+    if generation % 50 == 0:
+        print(generation, changesCounter, Energy[0], TEMPERATURE)
+    if TEMPERATURE > 1:
+        TEMPERATURE = int(TEMPERATURE * STEP)
+    else:
+        MAX_TEMPERATURE = int(MAX_TEMPERATURE * STEP)
+        TEMPERATURE = MAX_TEMPERATURE
+    generation += 1
+
+gp.writeGraph(graph, 'rndtestsukurac')
+print(Energy[1][0], Energy[2][0][0], Energy[2][1][0], Energy[2][2][0], Energy[2][3][0], Energy[2][4][0], Energy[2][5][0], Energy[2][6][0], Energy[2][7][0])
+
+'''
+print(Energy[0])
+
+
+print(Energy[2][3][0])
+print(Energy[2][3][1])
+print(Energy[2][3][2])
+
+
+#fix00(graph, Energy[2][7][1], Energy[1][2], Energy[1][3], getBannedColoursS8, Energy)
 
 Energy = el.calculateEnergy(graph, banLecturesForProfessors, banLecturesForGrades)
 
 print(Energy[0])
 
-while Energy[1][1]:
-    fix00(graph, Energy[1][1], Energy[1][2], Energy[1][3], getBannedColoursH0)
-
-    Energy = el.calculateEnergy(graph, banLecturesForProfessors, banLecturesForGrades)
-
-    print(Energy[0])
+print(Energy[1][0])
 
 gp.writeGraph(graph, 'testsukurac')
+'''
 '''
 generation = 0
 
