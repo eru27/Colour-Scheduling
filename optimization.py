@@ -5,6 +5,8 @@ import random
 import copy
 import math
 
+from datetime import datetime
+
 #H0 = (penalty, naughtyNodes, professorsLectures, gradesLectures)
 
 #S1 = (penalty, naughtyNodes)
@@ -18,9 +20,16 @@ import math
 
 #---constants---
 
-TEMPERATURE_0 = 100
+AVG_COST = 5500
+
+P0 = 0.9
+PG = 0.01
+G = 300
+MAX_G = 1000
+
+TEMPERATURE_0 = (-AVG_COST) / (math.log(P0))
 TEMPERATURE = TEMPERATURE_0
-STEP = 0.95
+STEP = (-AVG_COST / (TEMPERATURE_0 * math.log(PG))) ** (1 / G)
 
 banLecturesForProfessors = [] #citanje iz fajla
 banLecturesForGrades = []
@@ -28,6 +37,15 @@ banLecturesForGrades = []
 #---------------
 
 changesCounter = 0
+
+def getFileName():
+    fN = str(datetime.now())
+    fN = fN.replace('-', '')
+    fN = fN.replace(' ', '')
+    fN = fN.replace(':', '')
+    fN = fN.replace('.', '')
+
+    return fN
 
 def getNodeColour(graph, node):
     return graph.nodes[node]['colour']
@@ -247,7 +265,7 @@ def annealing(orgGraph, orgEnergy):
             constraint = random.randint(1, el.NUMBER_OF_SOFT_CONSTRAINTS)
 
         moreArguments = getArguments(constraint, newEnergy)
-        fix00(graph = newGraph, naughtyNodes = newEnergy[2][constraint - 1][1], professorsLectures = newEnergy[1][2], gradesLectures = newEnergy[1][3], perfectColours = (newEnergy[2][2][1], newEnergy[2][4][1]), **moreArguments)
+        newGraph = fix00(graph = newGraph, naughtyNodes = newEnergy[2][constraint - 1][1], professorsLectures = newEnergy[1][2], gradesLectures = newEnergy[1][3], perfectColours = (newEnergy[2][2][1], newEnergy[2][4][1]), **moreArguments)
 
         newEnergy = el.calculateEnergy(newGraph, banLecturesForProfessors, banLecturesForGrades)
 
@@ -286,35 +304,44 @@ def getMin():
     minGraph = graph
     k = 1
 
-    while TEMPERATURE > 1:
+    while generation < MAX_G:
         graph, Energy = annealing(graph, Energy)
         if minPenalty > Energy[0]:
             minPenalty = Energy[0]
             minEnergy = Energy
             minGraph = graph
-        if generation % 50 == 0:
+        if generation % 100 == 0:
             print(generation, changesCounter, Energy[0], TEMPERATURE)
-        if TEMPERATURE > 1:
-            TEMPERATURE = int(TEMPERATURE * STEP)
-
+        #if TEMPERATURE > 1:
+            
+        TEMPERATURE = TEMPERATURE * STEP
+        
+        '''
         else:
-            TEMPERATURE = int(TEMPERATURE_0 * (STEP ** k))
+            TEMPERATURE = TEMPERATURE_0 * (STEP ** k)
             k += 1
-
+        '''
         generation += 1
 
     #gp.writeGraph(graph, 'rndtestsukurac')
     gp.writeGraph(minGraph, 'minsukurac' + str(TEMPERATURE_0))
-    print(minPenalty, generation)
-    print(TEMPERATURE_0)
+    print(minPenalty, minEnergy[1][0])
+    print(TEMPERATURE_0, TEMPERATURE, STEP)
+    print(AVG_COST)
+    print(P0, PG)
+    print(G, MAX_G)
     print('-')
     #print(minEnergy[1][0], minEnergy[2][0][0], minEnergy[2][1][0], minEnergy[2][2][0], minEnergy[2][3][0], minEnergy[2][4][0], minEnergy[2][5][0], minEnergy[2][6][0], minEnergy[2][7][0])
 
     return minGraph
 
+getMin()
+
+'''
 for i in range(13):
     getMin()
     TEMPERATURE_0 = int(TEMPERATURE_0 * 1.5)
+'''
 
 '''
 print(Energy[0])
