@@ -163,7 +163,6 @@ def S7(graph, numberOfLecturesPerDay):
 
     return (penalty, naughtyNodes, naughtyProfessorsDays)
 
-
 def S8(graph, lecturesInDay):
     'Grades should not have lecture by the same professor more days in a row'
     twoDaysLectures = [[] for i in range(gp.WORKING_DAYS)]

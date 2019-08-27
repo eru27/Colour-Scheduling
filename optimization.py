@@ -5,8 +5,6 @@ import random
 import copy
 import math
 
-from datetime import datetime
-
 #H0 = (penalty, naughtyNodes, professorsLectures, gradesLectures)
 
 #S1 = (penalty, naughtyNodes)
@@ -20,32 +18,12 @@ from datetime import datetime
 
 #---constants---
 
-AVG_COST = 5500
-
-P0 = 0.9
-PG = 0.01
-G = 300
-MAX_G = 1000
-
-TEMPERATURE_0 = (-AVG_COST) / (math.log(P0))
-TEMPERATURE = TEMPERATURE_0
-STEP = (-AVG_COST / (TEMPERATURE_0 * math.log(PG))) ** (1 / G)
-
 banLecturesForProfessors = [] #citanje iz fajla
 banLecturesForGrades = []
 
 #---------------
 
 changesCounter = 0
-
-def getFileName():
-    fN = str(datetime.now())
-    fN = fN.replace('-', '')
-    fN = fN.replace(' ', '')
-    fN = fN.replace(':', '')
-    fN = fN.replace('.', '')
-
-    return fN
 
 def getNodeColour(graph, node):
     return graph.nodes[node]['colour']
@@ -252,7 +230,7 @@ def getArguments(constraint, energy):
 
     return arguments
 
-def annealing(orgGraph, orgEnergy):
+def annealing(orgGraph, orgEnergy, TEMPERATURE):
     newGraph = copy.deepcopy(orgGraph)
 
     newEnergy = el.calculateEnergy(newGraph, banLecturesForProfessors, banLecturesForGrades) #zbog adresa node-ova ne budi debil ponovo
@@ -271,71 +249,16 @@ def annealing(orgGraph, orgEnergy):
 
     deltaEnergy = orgEnergy[0] - newEnergy[0]
 
-    
-    global changesCounter
-
     if deltaEnergy > 0:
-        changesCounter += 1
-        return (newGraph, newEnergy)
+        return (newGraph, newEnergy, 1)
 
     elif math.exp(deltaEnergy / TEMPERATURE) >= random.uniform(0, 1):
-        changesCounter += 1
-        return (newGraph, newEnergy)
+        return (newGraph, newEnergy, 1)
+
     else:
-        return (orgGraph, orgEnergy)
+        return (orgGraph, orgEnergy, 0)
 
-def getMin():
-    graph = gp.getGraph()
 
-    print(len(graph.nodes))
-
-    Energy = el.calculateEnergy(graph, banLecturesForProfessors, banLecturesForGrades)
-
-    global changesCounter
-    changesCounter = 0
-
-    global TEMPERATURE_0
-    global TEMPERATURE 
-    TEMPERATURE = TEMPERATURE_0
-
-    generation = 0
-    minPenalty = Energy[0]
-    minEnergy = Energy
-    minGraph = graph
-    k = 1
-
-    while generation < MAX_G:
-        graph, Energy = annealing(graph, Energy)
-        if minPenalty > Energy[0]:
-            minPenalty = Energy[0]
-            minEnergy = Energy
-            minGraph = graph
-        if generation % 100 == 0:
-            print(generation, changesCounter, Energy[0], TEMPERATURE)
-        #if TEMPERATURE > 1:
-            
-        TEMPERATURE = TEMPERATURE * STEP
-        
-        '''
-        else:
-            TEMPERATURE = TEMPERATURE_0 * (STEP ** k)
-            k += 1
-        '''
-        generation += 1
-
-    #gp.writeGraph(graph, 'rndtestsukurac')
-    gp.writeGraph(minGraph, 'minsukurac' + str(TEMPERATURE_0))
-    print(minPenalty, minEnergy[1][0])
-    print(TEMPERATURE_0, TEMPERATURE, STEP)
-    print(AVG_COST)
-    print(P0, PG)
-    print(G, MAX_G)
-    print('-')
-    #print(minEnergy[1][0], minEnergy[2][0][0], minEnergy[2][1][0], minEnergy[2][2][0], minEnergy[2][3][0], minEnergy[2][4][0], minEnergy[2][5][0], minEnergy[2][6][0], minEnergy[2][7][0])
-
-    return minGraph
-
-getMin()
 
 '''
 for i in range(13):

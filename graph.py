@@ -28,6 +28,40 @@ class Node:
         'Prints node as "proff,grade"'
         print(str(self.proff) + ',' + str(self.grade))
 
+def loadNodes(fileName):
+    'Loads nodes form csv file with rows being professors and values being grades'
+    f = open(fileName, 'r')
+    nodes = []
+    maxGrade = -1
+    maxProff = -1
+
+    '''
+    for line in f.readlines(): #For tuples
+        l = line.split(',')
+        nodes.append(Node(int(l[0]), int(l[1])))
+        if int(l[0]) > maxProff:
+            maxProff = int(l[0])
+        if int(l[1]) > maxGrade:
+            maxGrade = int(l[1])
+
+    '''
+    for proff, line in enumerate(f.readlines()):
+        grades = line.split(',') 
+        for grade in grades[:-1]: #Last one is newLine
+            nodes.append(Node(proff, int(grade)))
+            if int(grade) > maxGrade:
+                maxGrade = int(grade)
+        if proff > maxProff:
+            maxProff = proff
+    
+    f.close()
+
+    global NUMBER_OF_PROFF
+    NUMBER_OF_PROFF = maxProff + 1
+    global NUMBER_OF_GRADES
+    NUMBER_OF_GRADES = maxGrade + 1
+
+    return nodes
 
 def initGraph(nodes):
     'Creates graph with Node as nodes and connects two nodes that have same .proff or .grade'
@@ -70,49 +104,6 @@ def colourGraph(graph):
     
     return graph
 
-def loadNodes(fileName):
-    'Loads nodes form csv file with rows being professors and values being grades'
-    f = open(fileName, 'r')
-    nodes = []
-    maxGrade = -1
-    maxProff = -1
-
-    '''
-    for line in f.readlines(): #For tuples
-        l = line.split(',')
-        nodes.append(Node(int(l[0]), int(l[1])))
-        if int(l[0]) > maxProff:
-            maxProff = int(l[0])
-        if int(l[1]) > maxGrade:
-            maxGrade = int(l[1])
-
-    '''
-    for proff, line in enumerate(f.readlines()):
-        grades = line.split(',') 
-        for grade in grades[:-1]: #Last one is newLine
-            nodes.append(Node(proff, int(grade)))
-            if int(grade) > maxGrade:
-                maxGrade = int(grade)
-        if proff > maxProff:
-            maxProff = proff
-    
-    f.close()
-
-    global NUMBER_OF_PROFF
-    NUMBER_OF_PROFF = maxProff + 1
-    global NUMBER_OF_GRADES
-    NUMBER_OF_GRADES = maxGrade + 1
-
-    return nodes
-
-def writeGraph(graph, fileName):
-    'Writes graph in file by nodes as proff,grade,colour'
-    f = open(fileName, 'w')
-    for node in list(graph.nodes):
-        f.write(str(node.proff) + ',' + str(node.grade) + ',' + str(graph.nodes[node]['colour']) + '\n')
-
-    f.close()
-
 def getGraph():
     'Returns coloured graph extracted from source'
     nodes = loadNodes(SOURCE)
@@ -122,9 +113,27 @@ def getGraph():
     graph = colourGraph(graph)
 
     print(NUMBER_OF_PROFF, NUMBER_OF_GRADES, NUMBER_OF_COLOURS_USED)
-    writeGraph(graph, OUT)
+    writeGraph(graph, [], OUT)
 
     return graph
+
+def writeGraph(graph, parameters, fileName):
+    'Writes graph in file by nodes as proff,grade,colour'
+    f = open(fileName, 'w')
+
+    f.write(str(parameters).replace('[', '').replace(']', '').replace(' ', '') + '\n')
+    for node in list(graph.nodes):
+        f.write(str(node.proff) + ',' + str(node.grade) + ',' + str(graph.nodes[node]['colour']) + '\n')
+
+    f.write('NUMBER_OF_PROFF' + ',' + str(NUMBER_OF_PROFF) + '\n')
+    f.write('NUMBER_OF_GRADES' + ',' + str(NUMBER_OF_GRADES) + '\n')
+    f.write('WORKING_DAYS' + ',' + str(WORKING_DAYS) + '\n')
+    f.write('LECTURES_PER_DAY' + ',' + str(LECTURES_PER_DAY) + '\n')
+    f.write('NUMBER_OF_COLOURS_USED' + ',' + str(NUMBER_OF_COLOURS_USED) + '\n')
+    f.write('SOURCE' + ',' + str(SOURCE) + '\n')
+    f.write('OUT' + ',' + str(OUT) + '\n')
+
+    f.close()
 '''
 g = getGraph()
 print(len(list(g.nodes)))
