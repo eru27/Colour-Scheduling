@@ -9,18 +9,18 @@ import math
 
 #S1 = (penalty, naughtyNodes)
 #S2 = (penalty, naughtyNodes)
-#S3 = (penalty, emptyLectures)
+#S3 = (penalty, emptyGradesLectures)
 #S4 = (penalty, naughtyNodes, lecturesInDay)
-#S5 = (penalty, emptyLectures)
+#S5 = (penalty, emptyProfessorsLectures)
 #S6 = (penalty, naughtyNodes, numberOfLecturesPerDay)
 #S7 = (penalty, naughtyNodes, naughtyProfessorsDays)
 #S8 = (penalty, naughtyNodes, twoDaysLectures) ##fix this shit
 
 #---constants---
 
-MAX_TEMPERATURE = 5000
-TEMPERATURE = MAX_TEMPERATURE
-STEP = 0.9
+TEMPERATURE_0 = 100
+TEMPERATURE = TEMPERATURE_0
+STEP = 0.95
 
 banLecturesForProfessors = [] #citanje iz fajla
 banLecturesForGrades = []
@@ -142,28 +142,50 @@ def accordingToGrade(graph, node1, node2, gradesLectures):
                 return True
     return False
 
-def fix00(graph, naughtyNodes, professorsLectures, gradesLectures, getBannedColours, getBannedColoursArgumet, swappingNodesConditionArguments):
+def getPerfectColours(perfectColours, legalColours):
+    pLColours = []
+    for colour in range(gp.NUMBER_OF_COLOURS):
+        if perfectColours[colour] == 1 and colour in legalColours:
+            pLColours.append(colour)
+
+    return pLColours
+
+def fix00(graph, naughtyNodes, professorsLectures, gradesLectures, perfectColours, getBannedColours, getBannedColoursArgumet, swappingNodesConditionArguments):
     if not naughtyNodes:
         return graph
     random.seed()
     node = random.choice(naughtyNodes)
+
     legalColours = getLegalMoves(node, professorsLectures, gradesLectures)
-    bannedColours = getBannedColours(node, getBannedColoursArgumet)
-    colours = [colour for colour in legalColours if colour not in bannedColours]
-    if colours:
-        graph.nodes[node]['colour'] = random.choice(colours)
+
+    perfColoursToUse = [] #neke boje se pojavljuju dvaput
+    if swappingNodesConditionArguments[0] == 1:
+        perfColoursToUse += getPerfectColours(perfectColours[0][node.grade], legalColours)
+    if swappingNodesConditionArguments[1] == 1:
+        perfColoursToUse += getPerfectColours(perfectColours[1][node.proff], legalColours)
+    if perfColoursToUse:
+        graph.nodes[node]['colour'] = random.choice(perfColoursToUse)
+ 
     else:
-        swapList = []
-        for swapNode in graph.nodes:
-            if swappingNodesCondition(graph, node, swapNode, professorsLectures, gradesLectures, swappingNodesConditionArguments, bannedColours):
-                swapList.append(swapNode)
-        if swapList:
-            swapNode = random.choice(swapList)
-            tempColour = graph.nodes[node]['colour']
-            graph.nodes[node]['colour'] = graph.nodes[swapNode]['colour']
-            graph.nodes[swapNode]['colour'] = tempColour
+        bannedColours = getBannedColours(node, getBannedColoursArgumet)
+        colours = [colour for colour in legalColours if colour not in bannedColours]
+        if colours:
+            graph.nodes[node]['colour'] = random.choice(colours)
+
         else:
-            fixRandomLegal(graph, naughtyNodes, professorsLectures, gradesLectures)
+            swapList = []
+            for swapNode in graph.nodes:
+                if swappingNodesCondition(graph, node, swapNode, professorsLectures, gradesLectures, swappingNodesConditionArguments, bannedColours):
+                    swapList.append(swapNode)
+            if swapList:
+                swapNode = random.choice(swapList)
+                tempColour = graph.nodes[node]['colour']
+                graph.nodes[node]['colour'] = graph.nodes[swapNode]['colour']
+                graph.nodes[swapNode]['colour'] = tempColour
+
+            else:
+                fixRandomLegal(graph, naughtyNodes, professorsLectures, gradesLectures)
+
 
     return graph
 
@@ -217,17 +239,17 @@ def annealing(orgGraph, orgEnergy):
 
     newEnergy = el.calculateEnergy(newGraph, banLecturesForProfessors, banLecturesForGrades) #zbog adresa node-ova ne budi debil ponovo
 
-    random.seed()
-    constraint = 0
+    for i in range(int(math.log(TEMPERATURE))):
+        random.seed()
+        constraint = 0
 
-    while constraint == 0 or constraint == 3 or constraint == 5:
-        constraint = random.randint(1, el.NUMBER_OF_SOFT_CONSTRAINTS)
+        while constraint == 0 or constraint == 3 or constraint == 5:
+            constraint = random.randint(1, el.NUMBER_OF_SOFT_CONSTRAINTS)
 
-    moreArguments = getArguments(constraint, newEnergy)
+        moreArguments = getArguments(constraint, newEnergy)
+        fix00(graph = newGraph, naughtyNodes = newEnergy[2][constraint - 1][1], professorsLectures = newEnergy[1][2], gradesLectures = newEnergy[1][3], perfectColours = (newEnergy[2][2][1], newEnergy[2][4][1]), **moreArguments)
 
-    fix00(graph = newGraph, naughtyNodes = newEnergy[2][constraint - 1][1], professorsLectures = newEnergy[1][2], gradesLectures = newEnergy[1][3], **moreArguments)
-
-    newEnergy = el.calculateEnergy(newGraph, banLecturesForProfessors, banLecturesForGrades)
+        newEnergy = el.calculateEnergy(newGraph, banLecturesForProfessors, banLecturesForGrades)
 
     deltaEnergy = orgEnergy[0] - newEnergy[0]
 
@@ -244,27 +266,55 @@ def annealing(orgGraph, orgEnergy):
     else:
         return (orgGraph, orgEnergy)
 
-graph = gp.getGraph()
+def getMin():
+    graph = gp.getGraph()
 
-print(len(graph.nodes))
+    print(len(graph.nodes))
 
-Energy = el.calculateEnergy(graph, banLecturesForProfessors, banLecturesForGrades)
+    Energy = el.calculateEnergy(graph, banLecturesForProfessors, banLecturesForGrades)
 
-generation = 0
+    global changesCounter
+    changesCounter = 0
 
-while MAX_TEMPERATURE > 1:
-    graph, Energy = annealing(graph, Energy)
-    if generation % 50 == 0:
-        print(generation, changesCounter, Energy[0], TEMPERATURE)
-    if TEMPERATURE > 1:
-        TEMPERATURE = int(TEMPERATURE * STEP)
-    else:
-        MAX_TEMPERATURE = int(MAX_TEMPERATURE * STEP)
-        TEMPERATURE = MAX_TEMPERATURE
-    generation += 1
+    global TEMPERATURE_0
+    global TEMPERATURE 
+    TEMPERATURE = TEMPERATURE_0
 
-gp.writeGraph(graph, 'rndtestsukurac')
-print(Energy[1][0], Energy[2][0][0], Energy[2][1][0], Energy[2][2][0], Energy[2][3][0], Energy[2][4][0], Energy[2][5][0], Energy[2][6][0], Energy[2][7][0])
+    generation = 0
+    minPenalty = Energy[0]
+    minEnergy = Energy
+    minGraph = graph
+    k = 1
+
+    while TEMPERATURE > 1:
+        graph, Energy = annealing(graph, Energy)
+        if minPenalty > Energy[0]:
+            minPenalty = Energy[0]
+            minEnergy = Energy
+            minGraph = graph
+        if generation % 50 == 0:
+            print(generation, changesCounter, Energy[0], TEMPERATURE)
+        if TEMPERATURE > 1:
+            TEMPERATURE = int(TEMPERATURE * STEP)
+
+        else:
+            TEMPERATURE = int(TEMPERATURE_0 * (STEP ** k))
+            k += 1
+
+        generation += 1
+
+    #gp.writeGraph(graph, 'rndtestsukurac')
+    gp.writeGraph(minGraph, 'minsukurac' + str(TEMPERATURE_0))
+    print(minPenalty, generation)
+    print(TEMPERATURE_0)
+    print('-')
+    #print(minEnergy[1][0], minEnergy[2][0][0], minEnergy[2][1][0], minEnergy[2][2][0], minEnergy[2][3][0], minEnergy[2][4][0], minEnergy[2][5][0], minEnergy[2][6][0], minEnergy[2][7][0])
+
+    return minGraph
+
+for i in range(13):
+    getMin()
+    TEMPERATURE_0 = int(TEMPERATURE_0 * 1.5)
 
 '''
 print(Energy[0])

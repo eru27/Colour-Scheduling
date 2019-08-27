@@ -95,7 +95,7 @@ def loadNodes(fileName):
                 maxGrade = int(grade)
         if proff > maxProff:
             maxProff = proff
-            
+    
     f.close()
 
     global NUMBER_OF_PROFF
@@ -125,6 +125,10 @@ def getGraph():
     writeGraph(graph, OUT)
 
     return graph
+'''
+g = getGraph()
+print(len(list(g.nodes)))
+'''
 
 '''
 getGraph()

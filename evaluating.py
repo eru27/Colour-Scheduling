@@ -25,7 +25,7 @@ H0_PENALTY = 200
 S1_PENALTY = 100
 S2_PENALTY = 100
 S3_PENALTY = 100
-S4_PENALTY = 100
+S4_PENALTY = 20
 S5_PENALTY = 5
 S6_PENALTY = 10
 S7_PENALTY = 5
@@ -55,6 +55,7 @@ def H0(graph):
         except:
             naughtyNodes.append(node)
     penalty = H0_PENALTY * len(naughtyNodes)
+    #print(naughtyNodes)
     return (penalty, naughtyNodes, professorsLectures, gradesLectures)
 
 def S1(graph, professorsLectures, banLecturesForProfessors):
@@ -64,6 +65,7 @@ def S1(graph, professorsLectures, banLecturesForProfessors):
         if professorsLectures[lecture[0]][lecture[1]] == 1:
             naughtyNodes.append(findNode(graph, proff = lecture[0], colour = lecture[1]))
     penalty = S2_PENALTY * len(naughtyNodes)
+    #print(naughtyNodes)
     return (penalty, naughtyNodes)
 
 def S2(graph, gradesLectures, banLecturesForGrades):
@@ -73,19 +75,20 @@ def S2(graph, gradesLectures, banLecturesForGrades):
         if gradesLectures[lecture[0]][lecture[1]] == 1:
             naughtyNodes.append(findNode(graph, grade = lecture[0], colour =  lecture[1]))
     penalty = S1_PENALTY * len(naughtyNodes)
+    #print(naughtyNodes)
     return (penalty, naughtyNodes)
 
 def S3(gradesLectures):
     'Grades cannot have empty lectures except first and last ones in a day'
-    emptyLectures = [[0 for i in range(gp.NUMBER_OF_COLOURS)] for j in range(gp.NUMBER_OF_GRADES)]
+    emptyGradesLectures = [[0 for i in range(gp.NUMBER_OF_COLOURS)] for j in range(gp.NUMBER_OF_GRADES)]
     penalty = 0
     for grade in range(gp.NUMBER_OF_GRADES):
         for day in range(gp.WORKING_DAYS):
             for lectures in range(gp.LECTURES_PER_DAY)[1:-1]:
                 if gradesLectures[grade][gp.LECTURES_PER_DAY * day + lectures] == 0:
-                    emptyLectures[grade][gp.LECTURES_PER_DAY * day + lectures] = 1
+                    emptyGradesLectures[grade][gp.LECTURES_PER_DAY * day + lectures] = 1
                     penalty += S3_PENALTY
-    return (penalty, emptyLectures)
+    return (penalty, emptyGradesLectures)
 
 def S4(graph):
     'Grades cannot be thought by the same professor more than once a day'
@@ -99,11 +102,12 @@ def S4(graph):
         else:
             naughtyNodes.append(node)
     penalty = S4_PENALTY * len(naughtyNodes)
+    #print(naughtyNodes)
     return (penalty, naughtyNodes, lecturesInDay)
 
 def S5(professorsLectures):
     'Professors should not have empty lectures'
-    emptyLectures = [[0 for i in range(gp.NUMBER_OF_COLOURS)] for j in range(gp.NUMBER_OF_PROFF)]
+    emptyProfessorsLectures = [[0 for i in range(gp.NUMBER_OF_COLOURS)] for j in range(gp.NUMBER_OF_PROFF)]
     penalty = 0
     for proff in range(gp.NUMBER_OF_PROFF):
         for day in range(gp.WORKING_DAYS):
@@ -114,11 +118,11 @@ def S5(professorsLectures):
                     firstLecture = 1
                     lastLecture = lectures
                 if firstLecture == 1 and professorsLectures[proff][gp.LECTURES_PER_DAY * day + lectures] == 0:
-                    emptyLectures[proff][gp.LECTURES_PER_DAY * day + lectures] = 1
+                    emptyProfessorsLectures[proff][gp.LECTURES_PER_DAY * day + lectures] = 1
             for lastEmptyLectures in range(lastLecture, gp.LECTURES_PER_DAY):
-                emptyLectures[proff][gp.LECTURES_PER_DAY * day + lastEmptyLectures] = 0
-        penalty += S5_PENALTY * emptyLectures[proff].count(1)
-    return (penalty, emptyLectures)
+                emptyProfessorsLectures[proff][gp.LECTURES_PER_DAY * day + lastEmptyLectures] = 0
+        penalty += S5_PENALTY * emptyProfessorsLectures[proff].count(1)
+    return (penalty, emptyProfessorsLectures)
 
 def S6(graph, professorsLectures):
     'Professors should not have more than MAX_LECTURES_PER_DAY_FOR_PROF lectures per day'
@@ -136,6 +140,7 @@ def S6(graph, professorsLectures):
     for node in graph:
         if numberOfLecturesPerDay[node.proff][graph.nodes[node]['colour'] // gp.LECTURES_PER_DAY] > MAX_LECTURES_PER_DAY_FOR_PROF:
             naughtyNodes.append(node) 
+    #print(naughtyNodes)
 
     return (penalty, naughtyNodes, numberOfLecturesPerDay)
 
@@ -154,6 +159,7 @@ def S7(graph, numberOfLecturesPerDay):
     for node in graph:
         if naughtyProfessorsDays[node.proff][graph.nodes[node]['colour'] // gp.LECTURES_PER_DAY] > 0:
             naughtyNodes.append(node)
+    #print(naughtyNodes)
 
     return (penalty, naughtyNodes, naughtyProfessorsDays)
 
@@ -172,6 +178,7 @@ def S8(graph, lecturesInDay):
     for node in graph:
         if (node.proff, node.grade) in twoDaysLectures[graph.nodes[node]['colour'] // gp.LECTURES_PER_DAY]:
             naughtyNodes.append(node)
+    #print(naughtyNodes)
     
     return (penalty, naughtyNodes, twoDaysLectures)
 
