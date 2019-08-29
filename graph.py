@@ -112,7 +112,7 @@ def getGraph():
 
     graph = colourGraph(graph)
 
-    print(NUMBER_OF_PROFF, NUMBER_OF_GRADES, NUMBER_OF_COLOURS_USED)
+    #print(NUMBER_OF_PROFF, NUMBER_OF_GRADES, NUMBER_OF_COLOURS_USED)
     writeGraph(graph, [], OUT)
 
     return graph
