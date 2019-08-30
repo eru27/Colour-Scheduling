@@ -8,36 +8,43 @@ import math
 FOLDER_GRAPH = 'res/graphs/'
 FOLDER_PARAMETERS = 'res/parameters/'
 
-VERSION = 'iv'
+VERSION = 'mgmi'
+
 
 minminmin = 999999
+'''
 minminGraph = None
 minAvgCost = -1
 minP0 = -1
 minPG = -1
 minG = -1
 minMaxG = -1
+'''
 
 AVG_COST = 100
 
 P0 = 0.9
 PG = 0.01
-G = 800
-MAX_G = 1000
+MAX_G = 600
+G = int(MAX_G * 0.2)
 
 TEMPERATURE_0 = (-AVG_COST) / (math.log(P0))
 TEMPERATURE = TEMPERATURE_0
 STEP = (-AVG_COST / (TEMPERATURE_0 * math.log(PG))) ** (1 / G)
 
-def writeParameters(fileName):
+def writeParameters(fileName, energy):
     f = open(fileName, 'w')
+    
+    f.write('Energy' + ',' + energy + '\n')
 
+    '''
     f.write('AVG_COST' + ',' + str(minAvgCost) + '\n')
     f.write('P0' + ',' + str(minP0) + '\n')
     f.write('PG' + ',' + str(minPG) + '\n')
     f.write('G' + ',' + str(minG) + '\n')
     f.write('MAX_G' + ',' + str(minMaxG) + '\n')
     f.write('\n')
+    '''
 
     f.write('NUMBER_OF_HARD_CONSTRAINTS' + ',' + str(el.NUMBER_OF_HARD_CONSTRAINTS) + '\n')
     f.write('NUMBER_OF_SOFT_CONSTRAINTS' + ',' + str(el.NUMBER_OF_SOFT_CONSTRAINTS) + '\n')
@@ -61,7 +68,7 @@ def getFileName():
     return fN
 
 def getParameters():
-    return [minP0, minPG, minG, minMaxG]
+    return [P0, PG, G, MAX_G]
 
 def getMin():
     graph = gp.getGraph()
@@ -121,8 +128,43 @@ def getMin():
     return minGraph, minEnergy
 
 def mejn():
-    avgCostVal = [100, 500, 1000, 5000, 5500]
-    maxGVal = [100, 200, 400, 800, 1000, 1600, 2000]
+    global MAX_G
+    global minminmin
+
+    global G
+    global STEP
+
+    for MAX_G in [100, 200, 500, 1000]:
+        G = int(MAX_G * 0.2)
+        STEP = (-AVG_COST / (TEMPERATURE_0 * math.log(PG))) ** (1 / G)
+
+        graph1, energy1 = getMin()
+        graph2, energy2 = getMin()
+        graph3, energy3 = getMin()
+        
+        minE = min(energy1[0], energy2[0], energy3[0])
+
+        if energy1[0] == minE:
+            graph = graph1
+        elif energy2[0] == minE:
+            graph = graph2
+        else:
+            graph = graph3
+
+        if minE < minminmin:
+            minminmin = minE
+
+        gp.writeGraph(graph, [minE] + getParameters(), 'outForMaxg/' + VERSION + getFileName())
+
+    print(minminmin)   
+        
+
+mejn()
+
+'''
+def mejn():
+    avgCostVal = [20]
+    maxGVal = [100, 200, 400]
     GVal = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     P0Val = [0.99, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2]
     PGVal = [0.05, 0.04, 0.03, 0.02, 0.01, 0.005]
@@ -195,5 +237,4 @@ def mejn():
                 fileName = getFileName()
                 gp.writeGraph(minminGraph, [minminmin] + getParameters(), FOLDER_GRAPH + VERSION + fileName)
                 writeParameters(FOLDER_PARAMETERS + VERSION + fileName)
-
-mejn()
+'''

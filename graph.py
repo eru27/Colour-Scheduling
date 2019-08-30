@@ -7,13 +7,13 @@ IDFK_counter = 0
 NUMBER_OF_PROFF = 0
 NUMBER_OF_GRADES = 0
 
-WORKING_DAYS = 5
-LECTURES_PER_DAY = 8
+WORKING_DAYS = 4
+LECTURES_PER_DAY = 4
 NUMBER_OF_COLOURS = WORKING_DAYS * LECTURES_PER_DAY #Number of lectures slots
 
 NUMBER_OF_COLOURS_USED = 0
-#'sources/set01.csv'
-SOURCE = 'sources/legithehe.csv'
+#'sources/legithehe.csv'
+SOURCE = 'sources/set01.csv'
 OUT = 'f.csv'
 
 #---------------
@@ -35,7 +35,7 @@ def loadNodes(fileName):
     maxGrade = -1
     maxProff = -1
 
-    '''
+    
     for line in f.readlines(): #For tuples
         l = line.split(',')
         nodes.append(Node(int(l[0]), int(l[1])))
@@ -53,7 +53,7 @@ def loadNodes(fileName):
                 maxGrade = int(grade)
         if proff > maxProff:
             maxProff = proff
-    
+    '''
     f.close()
 
     global NUMBER_OF_PROFF
