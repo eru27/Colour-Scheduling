@@ -8,7 +8,7 @@ import math
 FOLDER_GRAPH = 'res/graphs/'
 FOLDER_PARAMETERS = 'res/parameters/'
 
-VERSION = 'mgmi'
+VERSION = 'mgmii'
 
 
 minminmin = 999999
@@ -80,16 +80,18 @@ def getMin():
     changesCounter = 0
 
     global TEMPERATURE
+    TEMPERATURE = TEMPERATURE_0
 
     generation = 0
     minPenalty = Energy[0]
     minEnergy = Energy
     minGraph = graph
     #k = 1
-    
+    badKiddos = 0
     while generation < MAX_G:
-        graph, Energy, change = opt.annealing(graph, Energy, TEMPERATURE)
+        graph, Energy, change, bk = opt.annealing(graph, Energy, TEMPERATURE)
         changesCounter += change
+        badKiddos += bk
 
         if minPenalty > Energy[0]:
             minPenalty = Energy[0]
@@ -97,7 +99,7 @@ def getMin():
             minGraph = graph
         '''
         if generation % 100 == 0:
-            print(generation, changesCounter, Energy[0], TEMPERATURE)
+            print('.', generation, changesCounter, Energy[0], TEMPERATURE)
         '''
         #if TEMPERATURE > 1:    
         TEMPERATURE = TEMPERATURE * STEP
@@ -125,6 +127,8 @@ def getMin():
     '''
     #print(minEnergy[1][0], minEnergy[2][0][0], minEnergy[2][1][0], minEnergy[2][2][0], minEnergy[2][3][0], minEnergy[2][4][0], minEnergy[2][5][0], minEnergy[2][6][0], minEnergy[2][7][0])
 
+    #print(changesCounter, badKiddos)
+
     return minGraph, minEnergy
 
 def mejn():
@@ -134,7 +138,7 @@ def mejn():
     global G
     global STEP
 
-    for MAX_G in [100, 200, 500, 1000]:
+    for MAX_G in [200, 500, 1000]:
         G = int(MAX_G * 0.2)
         STEP = (-AVG_COST / (TEMPERATURE_0 * math.log(PG))) ** (1 / G)
 
@@ -154,6 +158,8 @@ def mejn():
         if minE < minminmin:
             minminmin = minE
 
+        #print(MAX_G, minE)
+        #print()
         gp.writeGraph(graph, [minE] + getParameters(), 'outForMaxg/' + VERSION + getFileName())
 
     print(minminmin)   

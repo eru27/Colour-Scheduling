@@ -250,13 +250,13 @@ def annealing(orgGraph, orgEnergy, TEMPERATURE):
     deltaEnergy = orgEnergy[0] - newEnergy[0]
 
     if deltaEnergy > 0:
-        return (newGraph, newEnergy, 1)
+        return (newGraph, newEnergy, 1, 0)
 
     elif math.exp(deltaEnergy / TEMPERATURE) >= random.uniform(0, 1):
-        return (newGraph, newEnergy, 1)
+        return (newGraph, newEnergy, 1, 1)
 
     else:
-        return (orgGraph, orgEnergy, 0)
+        return (orgGraph, orgEnergy, 0, 0)
 
 
 
