@@ -5,16 +5,17 @@ IDFK_counter = 0
 #---constants---
 
 NUMBER_OF_PROFF = 0
-NUMBER_OF_GRADES = 0
+NUMBER_OF_GRADES = 0 #fix u load graph
 
-WORKING_DAYS = 4
-LECTURES_PER_DAY = 4
+WORKING_DAYS = 5
+LECTURES_PER_DAY = 14
 NUMBER_OF_COLOURS = WORKING_DAYS * LECTURES_PER_DAY #Number of lectures slots
 
 NUMBER_OF_COLOURS_USED = 0
 #'sources/legithehe.csv'
+#'sources/legitlegitosn.csv'
 SOURCE = 'sources/set01.csv'
-OUT = 'f.csv'
+OUT = 'fosnf.csv'
 
 #---------------
 
@@ -58,6 +59,7 @@ def loadNodes(fileName):
 
     global NUMBER_OF_PROFF
     NUMBER_OF_PROFF = maxProff + 1
+    
     global NUMBER_OF_GRADES
     NUMBER_OF_GRADES = maxGrade + 1
 
@@ -134,6 +136,8 @@ def writeGraph(graph, parameters, fileName):
     f.write('OUT' + ',' + str(OUT) + '\n')
 
     f.close()
+
+#getGraph()
 '''
 g = getGraph()
 print(len(list(g.nodes)))

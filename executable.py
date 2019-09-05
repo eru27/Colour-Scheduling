@@ -5,10 +5,12 @@ import optimization as opt
 from datetime import datetime
 import math
 
-FOLDER_GRAPH = 'res/graphs/'
-FOLDER_PARAMETERS = 'res/parameters/'
+RASP = 'legit/osn/'
 
-VERSION = 'mgmii'
+FOLDER_GRAPH = 'graph/'
+FOLDER_PARAMETERS = 'param/'
+
+VERSION = 'ii'
 
 
 minminmin = 999999
@@ -21,11 +23,11 @@ minG = -1
 minMaxG = -1
 '''
 
-AVG_COST = 100
+AVG_COST = 200
 
 P0 = 0.9
 PG = 0.01
-MAX_G = 600
+MAX_G = 2000
 G = int(MAX_G * 0.2)
 
 TEMPERATURE_0 = (-AVG_COST) / (math.log(P0))
@@ -35,7 +37,7 @@ STEP = (-AVG_COST / (TEMPERATURE_0 * math.log(PG))) ** (1 / G)
 def writeParameters(fileName, energy):
     f = open(fileName, 'w')
     
-    f.write('Energy' + ',' + energy + '\n')
+    f.write('Energy' + ',' + str(energy) + '\n')
 
     '''
     f.write('AVG_COST' + ',' + str(minAvgCost) + '\n')
@@ -65,7 +67,7 @@ def getFileName():
     fN = str(datetime.now())
     fN = fN.replace('-', '').replace(' ', '').replace(':', '').replace('.', '')
 
-    return fN
+    return VERSION + fN
 
 def getParameters():
     return [P0, PG, G, MAX_G]
@@ -98,8 +100,8 @@ def getMin():
             minEnergy = Energy
             minGraph = graph
         '''
-        if generation % 100 == 0:
-            print('.', generation, changesCounter, Energy[0], TEMPERATURE)
+        if generation % 1000 == 0:
+            print('.', generation, changesCounter, Energy[0], minminmin, TEMPERATURE)
         '''
         #if TEMPERATURE > 1:    
         TEMPERATURE = TEMPERATURE * STEP
@@ -131,15 +133,23 @@ def getMin():
 
     return minGraph, minEnergy
 
-def mejn():
-    global MAX_G
+def main():
     global minminmin
 
+    global AVG_COST
+    global MAX_G
     global G
+    global P0
+    global PG
+
+    global TEMPERATURE_0
     global STEP
 
-    for MAX_G in [200, 500, 1000]:
+
+
+    for MAX_G in [200, 800, 1000, 2000, 5000]:
         G = int(MAX_G * 0.2)
+
         STEP = (-AVG_COST / (TEMPERATURE_0 * math.log(PG))) ** (1 / G)
 
         graph1, energy1 = getMin()
@@ -160,13 +170,141 @@ def mejn():
 
         #print(MAX_G, minE)
         #print()
-        gp.writeGraph(graph, [minE] + getParameters(), 'outForMaxg/' + VERSION + getFileName())
+
+        fName = getFileName()
+        gp.writeGraph(graph, [minE] + getParameters(), RASP + 'MaxG/' + FOLDER_GRAPH + fName)
+        writeParameters(RASP + 'MaxG/' + FOLDER_PARAMETERS + fName, minE)
+
+        print('a')
 
     print(minminmin)   
+
+    minminmin = 999999
+
+    MAX_G = 2000
+
+    for percG in [0.1, 0.2, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]:
+        G = MAX_G * percG
+
+        STEP = (-AVG_COST / (TEMPERATURE_0 * math.log(PG))) ** (1 / G)
+
+        graph1, energy1 = getMin()
+        graph2, energy2 = getMin()
+        graph3, energy3 = getMin()
+
+        minE = min(energy1[0], energy2[0], energy3[0])
+
+        if energy1[0] == minE:
+            graph = graph1
+        elif energy2[0] == minE:
+            graph = graph2
+        else:
+            graph = graph3
+
+        if minE < minminmin:
+            minminmin = minE
+
+        fName = getFileName()
+        gp.writeGraph(graph, [minE] + getParameters(), RASP + 'G/' + FOLDER_GRAPH + fName)
+        writeParameters(RASP + 'G/' + FOLDER_PARAMETERS + fName, minE)
+
+        print('s')
         
+    print(minminmin)   
 
-mejn()
+    minminmin = 999999
 
+    G = MAX_G * 0.2
+
+    for P0 in [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.99]:
+        TEMPERATURE_0 = (-AVG_COST) / (math.log(P0))
+        STEP = (-AVG_COST / (TEMPERATURE_0 * math.log(PG))) ** (1 / G)
+
+        graph1, energy1 = getMin()
+        graph2, energy2 = getMin()
+        graph3, energy3 = getMin()
+
+        minE = min(energy1[0], energy2[0], energy3[0])
+
+        if energy1[0] == minE:
+            graph = graph1
+        elif energy2[0] == minE:
+            graph = graph2
+        else:
+            graph = graph3
+
+        if minE < minminmin:
+            minminmin = minE
+
+        fName = getFileName()
+        gp.writeGraph(graph, [minE] + getParameters(), RASP + 'P0/' + FOLDER_GRAPH + fName)
+        writeParameters(RASP + 'P0/' + FOLDER_PARAMETERS + fName, minE)
+
+        print('d')
+
+    print(minminmin)   
+
+    minminmin = 999999
+
+    P0 = 0.9
+    '''
+    for AVG_COST in [200, 500, 1000, 2000, 5000]:
+        TEMPERATURE_0 = (-AVG_COST) / (math.log(P0))
+        STEP = (-AVG_COST / (TEMPERATURE_0 * math.log(PG))) ** (1 / G)
+
+        graph1, energy1 = getMin()
+        graph2, energy2 = getMin()
+        graph3, energy3 = getMin()
+
+        minE = min(energy1[0], energy2[0], energy3[0])
+
+        if energy1[0] == minE:
+            graph = graph1
+        elif energy2[0] == minE:
+            graph = graph2
+        else:
+            graph = graph3
+
+        if minE < minminmin:
+            minminmin = minE
+
+        fName = getFileName()
+        gp.writeGraph(graph, [minE] + getParameters(), RASP + 'avgCost/' + FOLDER_GRAPH + fName)
+        writeParameters(RASP + 'avgCost/' + FOLDER_PARAMETERS + fName, minE)
+        '''
+    print(minminmin)
+
+main()
+'''
+MAX_G = 30000
+
+G = int(MAX_G * 0.2)
+
+STEP = (-AVG_COST / (TEMPERATURE_0 * math.log(PG))) ** (1 / G)
+
+graph1, energy1 = getMin()
+graph2, energy2 = getMin()
+graph3, energy3 = getMin()
+
+minE = min(energy1[0], energy2[0], energy3[0])
+
+if energy1[0] == minE:
+    graph = graph1
+elif energy2[0] == minE:
+    graph = graph2
+else:
+    graph = graph3
+
+if minE < minminmin:
+    minminmin = minE
+
+#print(MAX_G, minE)
+#print()
+
+fName = getFileName()
+gp.writeGraph(graph, [minE] + getParameters(), RASP + 'MaxG/' + FOLDER_GRAPH + fName)
+writeParameters(RASP + 'MaxG/' + FOLDER_PARAMETERS + fName, minE)
+'''
 '''
 def mejn():
     avgCostVal = [20]

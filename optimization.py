@@ -21,6 +21,22 @@ import math
 banLecturesForProfessors = [] #citanje iz fajla
 banLecturesForGrades = []
 
+
+def generatingBanLecturesForGrades():
+    First = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    Second = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+
+    global banLecturesForGrades
+    for grade in First:
+        for lect in range(7, 14):
+            banLecturesForGrades.append((grade, lect))
+
+    for grade in Second:
+        for lect in range(0, 7):
+            banLecturesForGrades.append((grade, lect))
+    
+    #print(banLecturesForGrades)
+
 #---------------
 
 changesCounter = 0
@@ -44,14 +60,18 @@ def fixRandomLegal(graph, naughtyNodes, professorsLectures, gradesLectures):
 
     isFixed = False
     while not isFixed:
-        node = naughtyNodes[index]
-        
-        legalColours = getLegalMoves(node, professorsLectures, gradesLectures)
+        if index < len(naughtyNodes):
+            node = naughtyNodes[index]
+            
+            legalColours = getLegalMoves(node, professorsLectures, gradesLectures)
 
-        if legalColours:
-            graph.nodes[node]['colour'] = random.choice(legalColours)
+            if legalColours:
+                graph.nodes[node]['colour'] = random.choice(legalColours)
+                isFixed = True
+            index += 1
+        else:
+            fixRandom(graph, naughtyNodes)
             isFixed = True
-        index += 1
 
     return graph
 
@@ -239,13 +259,16 @@ def annealing(orgGraph, orgEnergy, TEMPERATURE):
         random.seed()
         constraint = 0
 
-        while constraint == 0 or constraint == 3 or constraint == 5:
-            constraint = random.randint(1, el.NUMBER_OF_SOFT_CONSTRAINTS)
+        if newEnergy[0] > 0:
+            while constraint == 0 or constraint == 3 or constraint == 5: 
+                constraint = random.randint(1, el.NUMBER_OF_SOFT_CONSTRAINTS)
+                if not newEnergy[2][constraint - 1][1]:
+                    constraint = 0
 
-        moreArguments = getArguments(constraint, newEnergy)
-        newGraph = fix00(graph = newGraph, naughtyNodes = newEnergy[2][constraint - 1][1], professorsLectures = newEnergy[1][2], gradesLectures = newEnergy[1][3], perfectColours = (newEnergy[2][2][1], newEnergy[2][4][1]), **moreArguments)
+            moreArguments = getArguments(constraint, newEnergy)
+            newGraph = fix00(graph = newGraph, naughtyNodes = newEnergy[2][constraint - 1][1], professorsLectures = newEnergy[1][2], gradesLectures = newEnergy[1][3], perfectColours = (newEnergy[2][2][1], newEnergy[2][4][1]), **moreArguments)
 
-        newEnergy = el.calculateEnergy(newGraph, banLecturesForProfessors, banLecturesForGrades)
+            newEnergy = el.calculateEnergy(newGraph, banLecturesForProfessors, banLecturesForGrades)
 
     deltaEnergy = orgEnergy[0] - newEnergy[0]
 
