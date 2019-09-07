@@ -5,16 +5,16 @@ IDFK_counter = 0
 #---constants---
 
 NUMBER_OF_PROFF = 0
-NUMBER_OF_GRADES = 0 #fix u load graph
+NUMBER_OF_GRADES = 20 #fix u load graph
 
 WORKING_DAYS = 5
 LECTURES_PER_DAY = 14
 NUMBER_OF_COLOURS = WORKING_DAYS * LECTURES_PER_DAY #Number of lectures slots
 
 NUMBER_OF_COLOURS_USED = 0
-#'sources/legithehe.csv'
+#'sources/set01.csv'
 #'sources/legitlegitosn.csv'
-SOURCE = 'sources/set01.csv'
+SOURCE = 'sources/legithehe.csv'
 OUT = 'fosnf.csv'
 
 #---------------
@@ -36,7 +36,7 @@ def loadNodes(fileName):
     maxGrade = -1
     maxProff = -1
 
-    
+    '''
     for line in f.readlines(): #For tuples
         l = line.split(',')
         nodes.append(Node(int(l[0]), int(l[1])))
@@ -54,15 +54,15 @@ def loadNodes(fileName):
                 maxGrade = int(grade)
         if proff > maxProff:
             maxProff = proff
-    '''
+    
     f.close()
 
     global NUMBER_OF_PROFF
     NUMBER_OF_PROFF = maxProff + 1
-    
+    '''
     global NUMBER_OF_GRADES
     NUMBER_OF_GRADES = maxGrade + 1
-
+    '''
     return nodes
 
 def initGraph(nodes):
@@ -138,29 +138,3 @@ def writeGraph(graph, parameters, fileName):
     f.close()
 
 #getGraph()
-'''
-g = getGraph()
-print(len(list(g.nodes)))
-'''
-
-'''
-getGraph()
-'''
-
-'''
-MAIN
-
-nodes = loadNodes(SOURCE)
-
-for node in nodes:
-    print(node.proff, node.grade)
-
-g = initGraph(nodes)
-
-print(g.number_of_edges())
-print(g.number_of_nodes())
-
-g = colourGraph(g)
-
-writeGraph(g, OUT)
-'''

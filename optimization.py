@@ -21,7 +21,6 @@ import math
 banLecturesForProfessors = [] #citanje iz fajla
 banLecturesForGrades = []
 
-
 def generatingBanLecturesForGrades():
     First = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     Second = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
@@ -205,15 +204,6 @@ def fix00(graph, naughtyNodes, professorsLectures, gradesLectures, perfectColour
 
     return graph
 
-'''
-def fix(graph, HardConstraint, SVector): #izbaci sve osim nn
-    naughtyNodes = HardConstraint[1] + SVector[0][1] + SVector[1][1] + SVector[3][1]
-    
-    #fixRandom(graph, naughtyNodes)
-    fixRandomLegal(graph, naughtyNodes, HardConstraint)
-    return graph
-'''
-
 def getArguments(constraint, energy):
     getBannedColours = None
     getBannedColoursArgumet = None
@@ -280,101 +270,3 @@ def annealing(orgGraph, orgEnergy, TEMPERATURE):
 
     else:
         return (orgGraph, orgEnergy, 0, 0)
-
-
-
-'''
-for i in range(13):
-    getMin()
-    TEMPERATURE_0 = int(TEMPERATURE_0 * 1.5)
-'''
-
-'''
-print(Energy[0])
-
-
-print(Energy[2][3][0])
-print(Energy[2][3][1])
-print(Energy[2][3][2])
-
-
-#fix00(graph, Energy[2][7][1], Energy[1][2], Energy[1][3], getBannedColoursS8, Energy)
-
-Energy = el.calculateEnergy(graph, banLecturesForProfessors, banLecturesForGrades)
-
-print(Energy[0])
-
-print(Energy[1][0])
-
-gp.writeGraph(graph, 'testsukurac')
-'''
-'''
-generation = 0
-
-t = TEMPERATURE
-
-avgE = []
-
-maxE = Energy[0]
-bestGraph = graph
-
-while generation < 100000:
-    new = annealing(graph, Energy)
-    graph = new[0]
-    Energy = new[1]
-    if Energy[0] > maxE:
-        maxE = Energy[0]
-        bestGraph = graph
-    generation += 1
-    if generation % 1000 == 0 or t == 1:
-        t = TEMPERATURE
-        TEMPERATURE *= 0.7
-        print()
-        print(generation)
-        print(Energy[0])
-        avgE.append(Energy[0])
-        print(sum(avgE) / len(avgE))
-    else:
-        t = int(t * STEP)
-
-print(changesCounter)
-gp.writeGraph(graph, 'outof/bestkurcina01')
-'''
-'''
-Im18 = 0
-
-for i in range(20):
-        print()
-        graph = gp.getGraph()
-
-        Energy = el.calculateEnergy(graph, banLecturesForProfessors, banLecturesForGrades)
-
-        generation = 0
-
-        t = TEMPERATURE
-
-        while t > 1:
-            new = annealing(graph, Energy)
-            graph = new[0]
-            Energy = new[1]
-            generation += 1
-            t = int(t * STEP)
-
-        print(generation)
-        print(Energy[0])
-        print(len(Energy[1][1]))
-        if len(Energy[1][1]) == 0:
-            Im18 += 1
-
-        for n in Energy[1]:
-            print(n.gp.printNode())
-            print(graph.nodes[n]['colour'])
-
-
-        gp.writeGraph(graph, 'outof/kurcina' + str(i))
-'''
-'''
-print()
-print()
-print(Im18 / 20)
-'''

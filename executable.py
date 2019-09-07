@@ -23,12 +23,12 @@ minG = -1
 minMaxG = -1
 '''
 
-AVG_COST = 200
+AVG_COST = 500
 
-P0 = 0.9
+P0 = 0.8
 PG = 0.01
-MAX_G = 2000
-G = int(MAX_G * 0.2)
+MAX_G = 20000
+G = int(MAX_G * 0.5)
 
 TEMPERATURE_0 = (-AVG_COST) / (math.log(P0))
 TEMPERATURE = TEMPERATURE_0
@@ -99,10 +99,10 @@ def getMin():
             minPenalty = Energy[0]
             minEnergy = Energy
             minGraph = graph
-        '''
+        
         if generation % 1000 == 0:
-            print('.', generation, changesCounter, Energy[0], minminmin, TEMPERATURE)
-        '''
+            print('.', generation, changesCounter, Energy[0], TEMPERATURE)
+        
         #if TEMPERATURE > 1:    
         TEMPERATURE = TEMPERATURE * STEP
         
@@ -145,6 +145,7 @@ def main():
     global TEMPERATURE_0
     global STEP
 
+    g = gp.getGraph()
 
 
     for MAX_G in [200, 800, 1000, 2000, 5000]:
@@ -274,111 +275,4 @@ def main():
         '''
     print(minminmin)
 
-main()
-'''
-MAX_G = 30000
-
-G = int(MAX_G * 0.2)
-
-STEP = (-AVG_COST / (TEMPERATURE_0 * math.log(PG))) ** (1 / G)
-
-graph1, energy1 = getMin()
-graph2, energy2 = getMin()
-graph3, energy3 = getMin()
-
-minE = min(energy1[0], energy2[0], energy3[0])
-
-if energy1[0] == minE:
-    graph = graph1
-elif energy2[0] == minE:
-    graph = graph2
-else:
-    graph = graph3
-
-if minE < minminmin:
-    minminmin = minE
-
-#print(MAX_G, minE)
-#print()
-
-fName = getFileName()
-gp.writeGraph(graph, [minE] + getParameters(), RASP + 'MaxG/' + FOLDER_GRAPH + fName)
-writeParameters(RASP + 'MaxG/' + FOLDER_PARAMETERS + fName, minE)
-'''
-'''
-def mejn():
-    avgCostVal = [20]
-    maxGVal = [100, 200, 400]
-    GVal = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-    P0Val = [0.99, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2]
-    PGVal = [0.05, 0.04, 0.03, 0.02, 0.01, 0.005]
-
-    global AVG_COST
-    global MAX_G
-    global G
-    global P0
-    global PG
-    
-    global minminmin
-    global minminGraph
-    global minAvgCost
-    global minP0
-    global minPG
-    global minG
-    global minMaxG
-
-    minGraph = None
-    minEnergy = None
-
-    for avgCost in avgCostVal:
-        AVG_COST = avgCost
-        for maxG in maxGVal:
-            MAX_G = maxG
-            for g in GVal:
-                G = g * MAX_G
-                for p0 in P0Val:
-                    P0 = p0
-                    for pg in PGVal:
-                        PG = pg
-
-                        global TEMPERATURE_0
-                        global TEMPERATURE
-                        global STEP
-
-                        TEMPERATURE_0 = (-AVG_COST) / (math.log(P0))
-                        TEMPERATURE = TEMPERATURE_0
-                        STEP = (-AVG_COST / (TEMPERATURE_0 * math.log(PG))) ** (1 / G)
-
-                        graph1, energy1 = getMin()
-                        graph2, energy2 = getMin()
-                        graph3, energy3 = getMin()
-
-                        if energy1[0] <= energy2[0] and energy1[0] < energy3[0]:
-                            minGraph = graph1
-                            minEnergy = energy1
-                        elif energy2[0] <= energy1[0] and energy2[0] < energy3[0]:
-                            minGraph = graph2
-                            minEnergy = energy2
-                        else:
-                            minGraph = graph3
-                            minEnergy = graph3
-                        
-                        #print(minGraph)
-                        #print(minEnergy[0], '.')
-                        if minEnergy[0] < minminmin:
-                            minminmin = minEnergy[0]
-                            minminGraph = minGraph
-                            minAvgCost = AVG_COST
-                            minP0 = P0
-                            minPG = PG
-                            minG = G
-                            minMaxG = MAX_G
-
-                        print('.')
-
-                print(minminmin)
-
-                fileName = getFileName()
-                gp.writeGraph(minminGraph, [minminmin] + getParameters(), FOLDER_GRAPH + VERSION + fileName)
-                writeParameters(FOLDER_PARAMETERS + VERSION + fileName)
-'''
+#main()
