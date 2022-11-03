@@ -1,1 +1,1 @@
-Generating academic timetable using Graph Colouring and Simulated Annealing, IS Petnica 2019.
+Generating an Academic Timetable using Graph Colouring and Simulated Annealing, Petnica Science Center 2019.
